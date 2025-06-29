@@ -1,0 +1,81 @@
+OneCalama - App Ciudadana Municipal
+Aplicación móvil para ciudadanos de Calama que permite realizar denuncias municipales y consultar su historial.
+🎯 Objetivos
+
+Realizar denuncias ciudadanas de forma rápida y sencilla
+Consultar historial de denuncias con respuestas municipales
+Ver anuncios oficiales de la municipalidad
+
+🛠️ Tecnologías
+
+React Native con Expo
+Expo Router para navegación
+Tamagui para UI/UX
+TypeScript para tipado fuerte
+Django API como backend
+
+📱 Características
+✅ Funcionalidades Implementadas
+
+ Sistema de autenticación
+ Formulario de denuncias
+ Historial de denuncias
+ Consulta de anuncios municipales
+ Interfaz responsive
+
+🚧 En Desarrollo
+
+Configuración inicial de Tamagui
+Estructura de carpetas
+Componentes UI básicos
+
+🚀 Instalación
+bash# Clonar el repositorio
+git clone [URL_DEL_REPO]
+cd onecalama
+
+# Instalar dependencias
+npm install --legacy-peer-deps
+
+# Ejecutar en desarrollo
+npx expo start
+📁 Estructura del Proyecto
+onecalama/
+├── app/                    # Expo Router - Rutas
+│   ├── (tabs)/            # Navegación principal
+│   └── auth/              # Autenticación
+├── src/
+│   ├── components/        # Componentes reutilizables
+│   ├── services/          # APIs y servicios
+│   ├── hooks/             # Custom hooks
+│   ├── types/             # Tipos TypeScript
+│   └── utils/             # Utilidades
+└── assets/                # Recursos estáticos
+🎨 Diseño
+Colores Oficiales de la Municipalidad
+
+Primario: #E67E22 (Naranja)
+Secundario: #009688 (Verde azulado)
+Municipal: #1A237E (Azul institucional)
+
+📝 Estado del Desarrollo
+Fase Actual: Configuración y arquitectura base
+
+✅ Configuración de Tamagui
+✅ Estructura de carpetas
+⏳ Componentes UI básicos
+⏳ Servicios de API
+⏳ Pantallas principales
+
+🤝 Contribución
+Este proyecto está en desarrollo activo. Para contribuir:
+
+Crear un branch para cada feature
+Seguir las convenciones de naming
+Documentar cambios importantes
+Hacer commits descriptivos
+
+📞 Contacto
+Proyecto desarrollado para la Ilustre Municipalidad de Calama.
+
+Estado: 🚧 En Desarrollo Activo
