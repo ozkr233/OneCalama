@@ -71,11 +71,11 @@ export default function DenunciaForm({
   return (
     <ScrollView style={{ flex: 1 }}>
       <YStack p="$4" gap="$4">
-        
+
         {/* Información Básica */}
-        <Card 
-          bg="white" 
-          p="$4" 
+        <Card
+          bg="white"
+          p="$4"
           br="$4"
           style={{
             shadowColor: '#000',
@@ -86,7 +86,7 @@ export default function DenunciaForm({
           }}
         >
           <H3 color="$textPrimary" mb="$3">📝 Información Básica</H3>
-          
+
           <YStack gap="$3">
             <YStack gap="$2">
               <Text fontWeight="600" color="$textPrimary">Título de la denuncia *</Text>
@@ -130,9 +130,9 @@ export default function DenunciaForm({
         </Card>
 
         {/* Categorización */}
-        <Card 
-          bg="white" 
-          p="$4" 
+        <Card
+          bg="white"
+          p="$4"
           br="$4"
           style={{
             shadowColor: '#000',
@@ -143,7 +143,7 @@ export default function DenunciaForm({
           }}
         >
           <H3 color="$textPrimary" mb="$3">🏢 Categorización</H3>
-          
+
           <YStack gap="$3">
             <YStack gap="$2">
               <Text fontWeight="600" color="$textPrimary">Departamento Municipal *</Text>
@@ -161,8 +161,8 @@ export default function DenunciaForm({
                   }}
                 />
               ) : (
-                <Select 
-                  value={formData.departamento} 
+                <Select
+                  value={formData.departamento}
                   onValueChange={(value) => updateField('departamento', value)}
                 >
                   <Select.Trigger
@@ -208,8 +208,8 @@ export default function DenunciaForm({
                   }}
                 />
               ) : (
-                <Select 
-                  value={formData.categoria} 
+                <Select
+                  value={formData.categoria}
                   onValueChange={(value) => updateField('categoria', value)}
                 >
                   <Select.Trigger
@@ -242,9 +242,9 @@ export default function DenunciaForm({
         </Card>
 
         {/* Ubicación */}
-        <Card 
-          bg="white" 
-          p="$4" 
+        <Card
+          bg="white"
+          p="$4"
           br="$4"
           style={{
             shadowColor: '#000',
@@ -255,7 +255,7 @@ export default function DenunciaForm({
           }}
         >
           <H3 color="$textPrimary" mb="$3">📍 Ubicación</H3>
-          
+
           <YStack gap="$3">
             <XStack gap="$3">
               <YStack f={3} gap="$2">
@@ -276,7 +276,7 @@ export default function DenunciaForm({
                   }}
                 />
               </YStack>
-              
+
               <YStack f={1} gap="$2">
                 <Text fontWeight="600" color="$textPrimary">Número *</Text>
                 <Input
@@ -321,9 +321,9 @@ export default function DenunciaForm({
         </Card>
 
         {/* Evidencias */}
-        <Card 
-          bg="white" 
-          p="$4" 
+        <Card
+          bg="white"
+          p="$4"
           br="$4"
           style={{
             shadowColor: '#000',
@@ -334,12 +334,12 @@ export default function DenunciaForm({
           }}
         >
           <H3 color="$textPrimary" mb="$3">📷 Evidencias</H3>
-          
+
           <YStack gap="$3">
             <Text color="$textSecondary">
               Agrega fotos o videos que ayuden a documentar el problema
             </Text>
-            
+
             {/* Mostrar evidencias agregadas */}
             {formData.evidencias.length > 0 && (
               <YStack gap="$2">
@@ -348,7 +348,7 @@ export default function DenunciaForm({
                 </Text>
               </YStack>
             )}
-            
+
             <Button
               variant="outlined"
               borderColor="$primary"
@@ -373,9 +373,9 @@ export default function DenunciaForm({
         </Card>
 
         {/* Botón de Envío */}
-        <Card 
-          bg="white" 
-          p="$4" 
+        <Card
+          bg="white"
+          p="$4"
           br="$4"
           style={{
             shadowColor: '#000',
@@ -413,7 +413,7 @@ export default function DenunciaForm({
               </Text>
             </XStack>
           </Button>
-          
+
           <Text fontSize="$2" color="$textSecondary" textAlign="center" mt="$3">
             * Campos obligatorios
           </Text>

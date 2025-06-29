@@ -1,39 +1,21 @@
 import React from 'react';
-import { Text, YStack, XStack, Button, Card, H2, H4, Paragraph } from 'tamagui';
-import { SafeAreaView, StatusBar } from 'react-native';
+import { Text, YStack, XStack, Button, Card, H4 } from 'tamagui';
+import { SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native';
+import AppHeader from '../../src/components/layout/AppHeader';
 
 export default function HomeScreen() {
   return (
     <>
-      <StatusBar backgroundColor="#1A237E" barStyle="light-content" />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
-        {/* Header */}
-        <YStack
-          bg="$municipal"
-          p="$4"
-          pb="$5"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
-        >
-          <XStack jc="space-between" ai="center">
-            <YStack>
-              <Text fontSize="$7" fontWeight="bold" color="white">
-                Denuncias Ciudadanas
-              </Text>
-              <Text fontSize="$4" color="rgba(255,255,255,0.9)">
-                Municipio de Calama
-              </Text>
-            </YStack>
-            <Ionicons name="notifications-outline" size={24} color="white" />
-          </XStack>
-        </YStack>
+        {/* Header unificado - Solo en pantalla principal muestra logo y nombre */}
+        <AppHeader
+          screenTitle="Inicio"
+          screenSubtitle="Panel principal"
+          screenIcon="home"
+          showAppInfo={true}
+        />
 
         <ScrollView style={{ flex: 1 }}>
           <YStack p="$4" gap="$5">

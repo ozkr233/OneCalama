@@ -27,13 +27,13 @@ export default function RootLayout() {
   return (
     <TamaguiProvider>
       <Stack>
-        <Stack.Screen 
-          name="(tabs)" 
-          options={{ headerShown: false }} 
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false }}
         />
-        <Stack.Screen 
-          name="+not-found" 
-          options={{ title: 'Página no encontrada' }} 
+        <Stack.Screen
+          name="+not-found"
+          options={{ title: 'Página no encontrada' }}
         />
       </Stack>
     </TamaguiProvider>
