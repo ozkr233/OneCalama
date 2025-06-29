@@ -9,9 +9,16 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
+    "@tamagui/animations-react-native": "^1.129.4",
+    "@tamagui/config": "^1.129.4",
+    "@tamagui/core": "^1.129.4",
+    "@tamagui/font-inter": "^1.129.4",
+    "@tamagui/theme-base": "^1.129.4",
     "expo": "~51.0.28",
     "expo-constants": "~16.0.2",
     "expo-font": "~12.0.9",
+    "expo-linear-gradient": "~13.0.2",
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.23",
     "expo-splash-screen": "~0.27.5",
@@ -25,21 +32,15 @@
     "react-native-reanimated": "~3.10.1",
     "react-native-safe-area-context": "4.10.5",
     "react-native-screens": "3.31.1",
+    "react-native-svg": "15.2.0",
     "react-native-web": "~0.19.10",
-    "@tamagui/animations-react-native": "^1.129.4",
-    "@tamagui/config": "^1.129.4",
-    "@tamagui/core": "^1.129.4",
-    "@tamagui/font-inter": "^1.129.4",
-    "@tamagui/theme-base": "^1.129.4",
-    "tamagui": "^1.129.4",
-    "expo-linear-gradient": "~13.0.2",
-    "react-native-svg": "15.2.0"
+    "tamagui": "^1.129.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@tamagui/babel-plugin": "^1.129.4",
     "@types/react": "~18.2.45",
-    "typescript": "~5.3.3",
-    "@tamagui/babel-plugin": "^1.129.4"
+    "typescript": "~5.3.3"
   },
   "private": true
 }
