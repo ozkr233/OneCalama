@@ -1,424 +1,297 @@
-import React from 'react';
-import { Text, YStack, XStack, Button, Card, Input, TextArea, Select, H3 } from 'tamagui';
-import { ScrollView, Alert } from 'react-native';
+// src/components/forms/DenunciaForm.tsx
+import React, { useState } from 'react';
+import { Modal, ScrollView } from 'react-native';
+import {
+  Text,
+  YStack,
+  XStack,
+  Button,
+  Card,
+  H4,
+  Input,
+  TextArea
+} from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
+import { DenunciaFormData, LocationData } from '../../types';
+import { useApiData } from '../../hooks/useApiData';
+import Selector from './Selector';
+import MapSelector from './MapSelector';
+import UbicacionSection from './UbicacionSection';
 
-export interface DenunciaFormData {
-  titulo: string;
-  descripcion: string;
-  categoria: string;
-  departamento: string;
-  nombreCalle: string;
-  numeroCalle: string;
-  evidencias: any[];
-}
 
 interface DenunciaFormProps {
-  formData: DenunciaFormData;
-  onFormDataChange: (data: DenunciaFormData) => void;
-  onSubmit: () => void;
-  onTomarFoto: () => void;
-  onUsarUbicacion: () => void;
-  loading?: boolean;
-  categorias?: Array<{ id: number; nombre: string; departamento?: any }>;
-  departamentos?: Array<{ id: number; nombre: string }>;
+  onSubmit?: (data: DenunciaFormData) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
-export default function DenunciaForm({
-  formData,
-  onFormDataChange,
+const DenunciaForm: React.FC<DenunciaFormProps> = ({
   onSubmit,
-  onTomarFoto,
-  onUsarUbicacion,
-  loading = false,
-  categorias = [],
-  departamentos = []
-}: DenunciaFormProps) {
+  isSubmitting = false
+}) => {
+  const [formData, setFormData] = useState<DenunciaFormData>({
+    titulo: '',
+    descripcion: '',
+    categoria: '',
+    departamento: '',
+    direccion: '',
+    ubicacion: undefined,
+  });
 
-  const updateField = (field: keyof DenunciaFormData, value: any) => {
-    onFormDataChange({
-      ...formData,
-      [field]: value
-    });
-  };
+  const [errors, setErrors] = useState<Partial<DenunciaFormData>>({});
+  const [isMapVisible, setIsMapVisible] = useState(false);
+
+  // Hook para datos de API
+  const {
+    departamentos,
+    categorias,
+    isLoadingDepartamentos,
+    isLoadingCategorias,
+    errorDepartamentos,
+    errorCategorias
+  } = useApiData();
 
   const validateForm = (): boolean => {
+    const newErrors: Partial<DenunciaFormData> = {};
+
     if (!formData.titulo.trim()) {
-      Alert.alert('Error', 'El título es obligatorio');
-      return false;
+      newErrors.titulo = 'El título es obligatorio';
     }
     if (!formData.descripcion.trim()) {
-      Alert.alert('Error', 'La descripción es obligatoria');
-      return false;
+      newErrors.descripcion = 'La descripción es obligatoria';
     }
     if (!formData.categoria) {
-      Alert.alert('Error', 'Selecciona una categoría');
-      return false;
+      newErrors.categoria = 'Selecciona una categoría';
     }
-    if (!formData.nombreCalle.trim() || !formData.numeroCalle.trim()) {
-      Alert.alert('Error', 'La dirección es obligatoria');
-      return false;
+    if (!formData.departamento) {
+      newErrors.departamento = 'Selecciona un departamento';
     }
-    return true;
+    if (!formData.direccion.trim() && !formData.ubicacion) {
+      newErrors.direccion = 'Ingresa una dirección o selecciona ubicación en el mapa';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit();
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      if (onSubmit) {
+        await onSubmit(formData);
+      } else {
+        // Implementación por defecto
+        console.log('Enviando denuncia:', formData);
+        alert('¡Denuncia enviada exitosamente!');
+      }
+
+      // Limpiar formulario después del envío exitoso
+      setFormData({
+        titulo: '',
+        descripcion: '',
+        categoria: '',
+        departamento: '',
+        direccion: '',
+        ubicacion: undefined,
+      });
+      setErrors({});
+
+    } catch (error) {
+      console.error('Error al enviar denuncia:', error);
+      alert('Error al enviar la denuncia. Por favor, intenta nuevamente.');
+    }
+  };
+
+  const updateField = (field: keyof DenunciaFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Limpiar error del campo al escribir
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleLocationSelect = (location: LocationData) => {
+    setFormData(prev => ({
+      ...prev,
+      ubicacion: location,
+      direccion: location.address || prev.direccion,
+    }));
+    setIsMapVisible(false);
+
+    // Limpiar error de dirección si existía
+    if (errors.direccion) {
+      setErrors(prev => ({ ...prev, direccion: undefined }));
     }
   };
 
   return (
     <ScrollView style={{ flex: 1 }}>
-      <YStack p="$4" gap="$4">
-
-        {/* Información Básica */}
-        <Card
-          bg="white"
-          p="$4"
-          br="$4"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-        >
-          <H3 color="$textPrimary" mb="$3">📝 Información Básica</H3>
+      <YStack gap="$4" p="$4" pb="$6">
+        {/* Sección: Información Básica */}
+        <Card elevate p="$4" gap="$4">
+          <H4 color="$textPrimary">📝 Información Básica</H4>
 
           <YStack gap="$3">
             <YStack gap="$2">
-              <Text fontWeight="600" color="$textPrimary">Título de la denuncia *</Text>
+              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
+                Título *
+              </Text>
               <Input
-                placeholder="Ej: Bache en la calle principal"
+                placeholder="Describe brevemente el problema"
                 value={formData.titulo}
                 onChangeText={(text) => updateField('titulo', text)}
-                borderColor="$secondary"
+                bg="white"
+                borderColor={errors.titulo ? "$error" : "$textDisabled"}
                 focusStyle={{ borderColor: '$primary' }}
-                editable={!loading}
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }}
               />
+              {errors.titulo && (
+                <Text fontSize="$3" color="$error">{errors.titulo}</Text>
+              )}
             </YStack>
 
             <YStack gap="$2">
-              <Text fontWeight="600" color="$textPrimary">Descripción detallada *</Text>
+              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
+                Descripción Detallada *
+              </Text>
               <TextArea
-                placeholder="Describe el problema con el mayor detalle posible..."
+                placeholder="Explica en detalle lo que está ocurriendo..."
                 value={formData.descripcion}
                 onChangeText={(text) => updateField('descripcion', text)}
-                borderColor="$secondary"
+                bg="white"
+                borderColor={errors.descripcion ? "$error" : "$textDisabled"}
                 focusStyle={{ borderColor: '$primary' }}
                 numberOfLines={4}
-                editable={!loading}
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }}
               />
-            </YStack>
-          </YStack>
-        </Card>
-
-        {/* Categorización */}
-        <Card
-          bg="white"
-          p="$4"
-          br="$4"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-        >
-          <H3 color="$textPrimary" mb="$3">🏢 Categorización</H3>
-
-          <YStack gap="$3">
-            <YStack gap="$2">
-              <Text fontWeight="600" color="$textPrimary">Departamento Municipal *</Text>
-              {loading ? (
-                <Input
-                  value="Cargando departamentos..."
-                  editable={false}
-                  borderColor="$secondary"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                />
-              ) : (
-                <Select
-                  value={formData.departamento}
-                  onValueChange={(value) => updateField('departamento', value)}
-                >
-                  <Select.Trigger
-                    borderColor="$secondary"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 2,
-                      elevation: 2,
-                    }}
-                  >
-                    <Select.Value placeholder="Selecciona un departamento" />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.ScrollUpButton />
-                    <Select.Viewport>
-                      {departamentos.map((dept) => (
-                        <Select.Item key={dept.id} index={dept.id} value={dept.id.toString()}>
-                          <Select.ItemText>{dept.nombre}</Select.ItemText>
-                        </Select.Item>
-                      ))}
-                    </Select.Viewport>
-                    <Select.ScrollDownButton />
-                  </Select.Content>
-                </Select>
-              )}
-            </YStack>
-
-            <YStack gap="$2">
-              <Text fontWeight="600" color="$textPrimary">Categoría *</Text>
-              {loading ? (
-                <Input
-                  value="Cargando categorías..."
-                  editable={false}
-                  borderColor="$secondary"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                />
-              ) : (
-                <Select
-                  value={formData.categoria}
-                  onValueChange={(value) => updateField('categoria', value)}
-                >
-                  <Select.Trigger
-                    borderColor="$secondary"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 2,
-                      elevation: 2,
-                    }}
-                  >
-                    <Select.Value placeholder="Selecciona una categoría" />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.ScrollUpButton />
-                    <Select.Viewport>
-                      {categorias.map((cat) => (
-                        <Select.Item key={cat.id} index={cat.id} value={cat.id.toString()}>
-                          <Select.ItemText>{cat.nombre}</Select.ItemText>
-                        </Select.Item>
-                      ))}
-                    </Select.Viewport>
-                    <Select.ScrollDownButton />
-                  </Select.Content>
-                </Select>
+              {errors.descripcion && (
+                <Text fontSize="$3" color="$error">{errors.descripcion}</Text>
               )}
             </YStack>
           </YStack>
         </Card>
 
-        {/* Ubicación */}
-        <Card
-          bg="white"
-          p="$4"
-          br="$4"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-        >
-          <H3 color="$textPrimary" mb="$3">📍 Ubicación</H3>
+        {/* Sección: Categorización */}
+        <Card elevate p="$4" gap="$4">
+          <H4 color="$textPrimary">🏷️ Categorización</H4>
 
           <YStack gap="$3">
-            <XStack gap="$3">
-              <YStack f={3} gap="$2">
-                <Text fontWeight="600" color="$textPrimary">Nombre de la calle *</Text>
-                <Input
-                  placeholder="Ej: Av. Argentina"
-                  value={formData.nombreCalle}
-                  onChangeText={(text) => updateField('nombreCalle', text)}
-                  borderColor="$secondary"
-                  focusStyle={{ borderColor: '$primary' }}
-                  editable={!loading}
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                />
-              </YStack>
+            <Selector
+              title="Departamento"
+              placeholder="Selecciona un departamento"
+              selectedValue={formData.departamento}
+              options={departamentos}
+              onSelect={(value) => updateField('departamento', value)}
+              isLoading={isLoadingDepartamentos}
+              error={errors.departamento || errorDepartamentos}
+              color="primary"
+            />
 
-              <YStack f={1} gap="$2">
-                <Text fontWeight="600" color="$textPrimary">Número *</Text>
-                <Input
-                  placeholder="123"
-                  value={formData.numeroCalle}
-                  onChangeText={(text) => updateField('numeroCalle', text)}
-                  keyboardType="numeric"
-                  borderColor="$secondary"
-                  focusStyle={{ borderColor: '$primary' }}
-                  editable={!loading}
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }}
-                />
-              </YStack>
-            </XStack>
-
-            <Button
-              variant="outlined"
-              borderColor="$secondary"
-              color="$secondary"
-              onPress={onUsarUbicacion}
-              disabled={loading}
-              style={{
-                shadowColor: '#009688',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <XStack ai="center" gap="$2">
-                <Ionicons name="location" size={20} color="#009688" />
-                <Text color="$secondary">Usar mi ubicación actual</Text>
-              </XStack>
-            </Button>
+            <Selector
+              title="Categoría"
+              placeholder="Selecciona una categoría"
+              selectedValue={formData.categoria}
+              options={categorias}
+              onSelect={(value) => updateField('categoria', value)}
+              isLoading={isLoadingCategorias}
+              error={errors.categoria || errorCategorias}
+              color="secondary"
+            />
           </YStack>
         </Card>
 
-        {/* Evidencias */}
-        <Card
-          bg="white"
-          p="$4"
-          br="$4"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-        >
-          <H3 color="$textPrimary" mb="$3">📷 Evidencias</H3>
+        {/* Sección: Ubicación */}
+        <UbicacionSection
+          direccion={formData.direccion}
+          ubicacion={formData.ubicacion}
+          error={errors.direccion}
+          onDireccionChange={(value) => updateField('direccion', value)}
+          onOpenMap={() => setIsMapVisible(true)}
+          onRemoveLocation={() => setFormData(prev => ({ ...prev, ubicacion: undefined }))}
+        />
 
-          <YStack gap="$3">
-            <Text color="$textSecondary">
-              Agrega fotos o videos que ayuden a documentar el problema
-            </Text>
+        {/* Sección: Evidencias */}
+        <Card elevate p="$4" gap="$4">
+          <H4 color="$textPrimary">📷 Evidencias (Opcional)</H4>
 
-            {/* Mostrar evidencias agregadas */}
-            {formData.evidencias.length > 0 && (
-              <YStack gap="$2">
-                <Text fontWeight="600" color="$textPrimary">
-                  Archivos agregados: {formData.evidencias.length}
-                </Text>
-              </YStack>
-            )}
-
+          <XStack gap="$3">
             <Button
-              variant="outlined"
+              f={1}
+              size="$4"
+              bg="white"
               borderColor="$primary"
-              borderStyle="dashed"
-              onPress={onTomarFoto}
-              h={80}
-              disabled={loading}
-              style={{
-                shadowColor: '#E67E22',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
+              borderWidth={2}
+              color="$primary"
+              onPress={() => console.log('Abrir cámara')}
             >
-              <YStack ai="center" gap="$2">
-                <Ionicons name="camera" size={24} color="#E67E22" />
-                <Text color="$primary" fontWeight="600">Agregar Foto/Video</Text>
-              </YStack>
+              <Ionicons name="camera" size={20} color="#E67E22" />
+              <Text color="$primary" ml="$2">Cámara</Text>
             </Button>
-          </YStack>
+
+            <Button
+              f={1}
+              size="$4"
+              bg="white"
+              borderColor="$primary"
+              borderWidth={2}
+              color="$primary"
+              onPress={() => console.log('Abrir galería')}
+            >
+              <Ionicons name="images" size={20} color="#E67E22" />
+              <Text color="$primary" ml="$2">Galería</Text>
+            </Button>
+          </XStack>
         </Card>
 
-        {/* Botón de Envío */}
-        <Card
-          bg="white"
-          p="$4"
-          br="$4"
+        {/* Botón de envío */}
+        <Button
+          size="$5"
+          bg="$primary"
+          color="white"
+          fontWeight="bold"
+          onPress={handleSubmit}
+          disabled={isSubmitting}
           style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
+            shadowColor: '#E67E22',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 8,
+          }}
+          pressStyle={{
+            scale: 0.98,
+            shadowOpacity: 0.2,
+            elevation: 4,
           }}
         >
-          <Button
-            size="$5"
-            bg="$primary"
-            color="white"
-            fontWeight="bold"
-            onPress={handleSubmit}
-            disabled={loading}
-            opacity={loading ? 0.7 : 1}
-            style={{
-              shadowColor: '#E67E22',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-              elevation: 8,
-            }}
-            pressStyle={{
-              scale: 0.98,
-              shadowOpacity: 0.2,
-              elevation: 4,
-            }}
-          >
-            <XStack ai="center" gap="$3">
+          {isSubmitting ? (
+            <Text color="white">Enviando...</Text>
+          ) : (
+            <>
               <Ionicons name="send" size={20} color="white" />
-              <Text color="white" fontWeight="bold" fontSize="$5">
-                {loading ? 'Enviando...' : 'Enviar Denuncia'}
+              <Text color="white" fontWeight="bold" ml="$2">
+                Enviar Denuncia
               </Text>
-            </XStack>
-          </Button>
+            </>
+          )}
+        </Button>
 
-          <Text fontSize="$2" color="$textSecondary" textAlign="center" mt="$3">
-            * Campos obligatorios
-          </Text>
-        </Card>
+        {/* Modal del mapa */}
+        <Modal
+          visible={isMapVisible}
+          animationType="slide"
+          presentationStyle="fullScreen"
+        >
+          <MapSelector
+            onLocationSelect={handleLocationSelect}
+            onClose={() => setIsMapVisible(false)}
+            initialLocation={formData.ubicacion}
+          />
+        </Modal>
       </YStack>
     </ScrollView>
   );
-}
+};
+
+export default DenunciaForm;

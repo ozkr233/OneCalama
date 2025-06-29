@@ -20,6 +20,9 @@ export default function HomeScreen() {
         <ScrollView style={{ flex: 1 }}>
           <YStack p="$4" gap="$5">
 
+            {/* Componente de prueba de API - TEMPORAL <ApiTest /> */}
+
+
             {/* Acciones Rápidas */}
             <Card
               bg="white"

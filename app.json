@@ -17,14 +17,22 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.municipalidadcalama.onecalama"
+      "bundleIdentifier": "com.municipalidadcalama.onecalama",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "OneCalama necesita acceso a tu ubicación para permitirte seleccionar la ubicación de tus denuncias ciudadanas.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "OneCalama necesita acceso a tu ubicación para permitirte seleccionar la ubicación de tus denuncias ciudadanas."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#E67E22"
       },
-      "package": "com.municipalidadcalama.onecalama"
+      "package": "com.municipalidadcalama.onecalama",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
