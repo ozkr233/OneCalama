@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Text, YStack, XStack, Button, Card, Input, TextArea, H3 } from 'tamagui';
-import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
+import { Text, YStack, XStack } from 'tamagui';
+import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DenunciaForm from '../../src/components/forms/DenunciaForm';
+import DenunciasService from '../../src/services/denuncias';
 
 // Tipo para el formulario
 interface DenunciaFormData {
@@ -26,43 +28,51 @@ export default function DenunciasScreen() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [departamentos, setDepartamentos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
 
-  const updateField = (field: keyof DenunciaFormData, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
-  };
+  // Cargar datos iniciales desde la API
+  useEffect(() => {
+    loadInitialData();
+  }, []);
 
-  const validateForm = (): boolean => {
-    if (!formData.titulo.trim()) {
-      Alert.alert('Error', 'El título es obligatorio');
-      return false;
+  const loadInitialData = async () => {
+    try {
+      console.log('🔄 Cargando datos desde la API...');
+      
+      // Cargar departamentos y categorías en paralelo
+      const [deptData, catData] = await Promise.all([
+        DenunciasService.getDepartamentos(),
+        DenunciasService.getCategorias(),
+      ]);
+      
+      setDepartamentos(deptData);
+      setCategorias(catData);
+      
+      console.log('✅ Datos cargados:', { 
+        departamentos: deptData.length, 
+        categorias: catData.length 
+      });
+      
+    } catch (error) {
+      console.error('❌ Error cargando datos iniciales:', error);
+      Alert.alert('Error', 'No se pudieron cargar los datos necesarios. Se usarán datos por defecto.');
     }
-    if (!formData.descripcion.trim()) {
-      Alert.alert('Error', 'La descripción es obligatoria');
-      return false;
-    }
-    if (!formData.nombreCalle.trim() || !formData.numeroCalle.trim()) {
-      Alert.alert('Error', 'La dirección es obligatoria');
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     setLoading(true);
     try {
-      console.log('📤 Enviando denuncia:', formData);
+      console.log('📤 Enviando publicación:', formData);
       
-      // Simulación de envío
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Llamada real a la API usando el service
+      const nuevaPublicacion = await DenunciasService.crearPublicacion(formData);
+      
+      console.log('✅ Publicación creada:', nuevaPublicacion);
       
       Alert.alert(
         '✅ Denuncia Enviada', 
-        'Tu denuncia ha sido registrada exitosamente. Te notificaremos sobre su progreso.',
+        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. Te notificaremos sobre su progreso.`,
         [
           { 
             text: 'OK', 
@@ -83,10 +93,10 @@ export default function DenunciasScreen() {
       );
       
     } catch (error) {
-      console.error('❌ Error enviando denuncia:', error);
+      console.error('❌ Error enviando publicación:', error);
       Alert.alert(
         '❌ Error', 
-        'No se pudo enviar la denuncia. Intenta nuevamente.'
+        'No se pudo enviar la denuncia. Verifica tu conexión e intenta nuevamente.'
       );
     } finally {
       setLoading(false);
@@ -101,12 +111,14 @@ export default function DenunciasScreen() {
         { 
           text: 'Cámara', 
           onPress: () => {
+            console.log('📸 Abrir cámara');
             Alert.alert('🚧 En desarrollo', 'La función de cámara estará disponible próximamente');
           }
         },
         { 
           text: 'Galería', 
           onPress: () => {
+            console.log('🖼️ Abrir galería');
             Alert.alert('🚧 En desarrollo', 'La función de galería estará disponible próximamente');
           }
         },
@@ -115,8 +127,27 @@ export default function DenunciasScreen() {
     );
   };
 
-  const handleUsarUbicacion = () => {
-    Alert.alert('🚧 En desarrollo', 'La función de GPS estará disponible próximamente');
+  const handleUsarUbicacion = async () => {
+    console.log('📍 Obteniendo ubicación GPS');
+    Alert.alert(
+      '📍 Ubicación GPS', 
+      '¿Deseas usar tu ubicación actual para completar automáticamente la dirección?',
+      [
+        {
+          text: 'Sí, usar GPS',
+          onPress: async () => {
+            try {
+              console.log('🛰️ Obteniendo coordenadas...');
+              Alert.alert('🚧 En desarrollo', 'La función de GPS estará disponible próximamente');
+            } catch (error) {
+              console.error('Error obteniendo ubicación:', error);
+              Alert.alert('Error', 'No se pudo obtener la ubicación');
+            }
+          }
+        },
+        { text: 'Cancelar', style: 'cancel' }
+      ]
+    );
   };
 
   return (
@@ -149,182 +180,16 @@ export default function DenunciasScreen() {
         </YStack>
 
         {/* Formulario */}
-        <ScrollView style={{ flex: 1 }}>
-          <YStack p="$4" gap="$4">
-            
-            {/* Información Básica */}
-            <Card 
-              bg="white" 
-              p="$4" 
-              br="$4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <H3 color="$textPrimary" mb="$3">📝 Información Básica</H3>
-              
-              <YStack gap="$3">
-                <YStack gap="$2">
-                  <Text fontWeight="600" color="$textPrimary">Título de la denuncia *</Text>
-                  <Input
-                    placeholder="Ej: Bache en la calle principal"
-                    value={formData.titulo}
-                    onChangeText={(text) => updateField('titulo', text)}
-                    borderColor="$secondary"
-                    focusStyle={{ borderColor: '$primary' }}
-                    editable={!loading}
-                  />
-                </YStack>
-
-                <YStack gap="$2">
-                  <Text fontWeight="600" color="$textPrimary">Descripción detallada *</Text>
-                  <TextArea
-                    placeholder="Describe el problema con el mayor detalle posible..."
-                    value={formData.descripcion}
-                    onChangeText={(text) => updateField('descripcion', text)}
-                    borderColor="$secondary"
-                    focusStyle={{ borderColor: '$primary' }}
-                    numberOfLines={4}
-                    editable={!loading}
-                  />
-                </YStack>
-              </YStack>
-            </Card>
-
-            {/* Ubicación */}
-            <Card 
-              bg="white" 
-              p="$4" 
-              br="$4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <H3 color="$textPrimary" mb="$3">📍 Ubicación</H3>
-              
-              <YStack gap="$3">
-                <XStack gap="$3">
-                  <YStack f={3} gap="$2">
-                    <Text fontWeight="600" color="$textPrimary">Nombre de la calle *</Text>
-                    <Input
-                      placeholder="Ej: Av. Argentina"
-                      value={formData.nombreCalle}
-                      onChangeText={(text) => updateField('nombreCalle', text)}
-                      borderColor="$secondary"
-                      focusStyle={{ borderColor: '$primary' }}
-                      editable={!loading}
-                    />
-                  </YStack>
-                  
-                  <YStack f={1} gap="$2">
-                    <Text fontWeight="600" color="$textPrimary">Número *</Text>
-                    <Input
-                      placeholder="123"
-                      value={formData.numeroCalle}
-                      onChangeText={(text) => updateField('numeroCalle', text)}
-                      keyboardType="numeric"
-                      borderColor="$secondary"
-                      focusStyle={{ borderColor: '$primary' }}
-                      editable={!loading}
-                    />
-                  </YStack>
-                </XStack>
-
-                <Button
-                  variant="outlined"
-                  borderColor="$secondary"
-                  color="$secondary"
-                  onPress={handleUsarUbicacion}
-                  disabled={loading}
-                >
-                  <XStack ai="center" gap="$2">
-                    <Ionicons name="location" size={20} color="#009688" />
-                    <Text color="$secondary">Usar mi ubicación actual</Text>
-                  </XStack>
-                </Button>
-              </YStack>
-            </Card>
-
-            {/* Evidencias */}
-            <Card 
-              bg="white" 
-              p="$4" 
-              br="$4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <H3 color="$textPrimary" mb="$3">📷 Evidencias</H3>
-              
-              <YStack gap="$3">
-                <Text color="$textSecondary">
-                  Agrega fotos o videos que ayuden a documentar el problema
-                </Text>
-                
-                <Button
-                  variant="outlined"
-                  borderColor="$primary"
-                  borderStyle="dashed"
-                  onPress={handleTomarFoto}
-                  h={80}
-                  disabled={loading}
-                >
-                  <YStack ai="center" gap="$2">
-                    <Ionicons name="camera" size={24} color="#E67E22" />
-                    <Text color="$primary" fontWeight="600">Agregar Foto/Video</Text>
-                  </YStack>
-                </Button>
-              </YStack>
-            </Card>
-
-            {/* Botón de Envío */}
-            <Card 
-              bg="white" 
-              p="$4" 
-              br="$4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <Button
-                size="$5"
-                bg="$primary"
-                color="white"
-                fontWeight="bold"
-                onPress={handleSubmit}
-                disabled={loading}
-                opacity={loading ? 0.7 : 1}
-              >
-                <XStack ai="center" gap="$3">
-                  <Ionicons name="send" size={20} color="white" />
-                  <Text color="white" fontWeight="bold" fontSize="$5">
-                    {loading ? 'Enviando...' : 'Enviar Denuncia'}
-                  </Text>
-                </XStack>
-              </Button>
-              
-              <Text fontSize="$2" color="$textSecondary" textAlign="center" mt="$3">
-                * Campos obligatorios
-              </Text>
-            </Card>
-          </YStack>
-        </ScrollView>
+        <DenunciaForm
+          formData={formData}
+          onFormDataChange={setFormData}
+          onSubmit={handleSubmit}
+          onTomarFoto={handleTomarFoto}
+          onUsarUbicacion={handleUsarUbicacion}
+          loading={loading}
+          categorias={categorias}
+          departamentos={departamentos}
+        />
       </SafeAreaView>
     </>
   );
