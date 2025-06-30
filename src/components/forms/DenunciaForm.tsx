@@ -1,5 +1,5 @@
 // src/components/forms/DenunciaForm.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal, ScrollView } from 'react-native';
 import {
   Text,
@@ -13,127 +13,48 @@ import {
 } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
 import { DenunciaFormData, LocationData } from '../../types';
-import { useApiData } from '../../hooks/useApiData';
 import Selector from './Selector';
 import MapSelector from './MapSelector';
 import UbicacionSection from './UbicacionSection';
 
-
 interface DenunciaFormProps {
-  onSubmit?: (data: DenunciaFormData) => Promise<void>;
-  isSubmitting?: boolean;
+  formData: DenunciaFormData;
+  onFormDataChange: (data: DenunciaFormData) => void;
+  onSubmit: () => void;
+  onTomarFoto?: () => void;
+  onUsarUbicacion?: () => void;
+  loading?: boolean;
+  categorias: any[];
+  departamentos: any[];
 }
 
 const DenunciaForm: React.FC<DenunciaFormProps> = ({
+  formData,
+  onFormDataChange,
   onSubmit,
-  isSubmitting = false
+  onTomarFoto,
+  onUsarUbicacion,
+  loading = false,
+  categorias,
+  departamentos
 }) => {
-  const [formData, setFormData] = useState<DenunciaFormData>({
-    titulo: '',
-    descripcion: '',
-    categoria: '',
-    departamento: '',
-    direccion: '',
-    ubicacion: undefined,
-  });
-
-  const [errors, setErrors] = useState<Partial<DenunciaFormData>>({});
-  const [isMapVisible, setIsMapVisible] = useState(false);
-
-  // Hook para datos de API
-  const {
-    departamentos,
-    categorias,
-    isLoadingDepartamentos,
-    isLoadingCategorias,
-    errorDepartamentos,
-    errorCategorias
-  } = useApiData();
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<DenunciaFormData> = {};
-
-    if (!formData.titulo.trim()) {
-      newErrors.titulo = 'El título es obligatorio';
-    }
-    if (!formData.descripcion.trim()) {
-      newErrors.descripcion = 'La descripción es obligatoria';
-    }
-    if (!formData.categoria) {
-      newErrors.categoria = 'Selecciona una categoría';
-    }
-    if (!formData.departamento) {
-      newErrors.departamento = 'Selecciona un departamento';
-    }
-    if (!formData.direccion.trim() && !formData.ubicacion) {
-      newErrors.direccion = 'Ingresa una dirección o selecciona ubicación en el mapa';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      if (onSubmit) {
-        await onSubmit(formData);
-      } else {
-        // Implementación por defecto
-        console.log('Enviando denuncia:', formData);
-        alert('¡Denuncia enviada exitosamente!');
-      }
-
-      // Limpiar formulario después del envío exitoso
-      setFormData({
-        titulo: '',
-        descripcion: '',
-        categoria: '',
-        departamento: '',
-        direccion: '',
-        ubicacion: undefined,
-      });
-      setErrors({});
-
-    } catch (error) {
-      console.error('Error al enviar denuncia:', error);
-      alert('Error al enviar la denuncia. Por favor, intenta nuevamente.');
-    }
-  };
-
-  const updateField = (field: keyof DenunciaFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-
-    // Limpiar error del campo al escribir
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const [isMapVisible, setIsMapVisible] = React.useState(false);
 
   const handleLocationSelect = (location: LocationData) => {
-    setFormData(prev => ({
-      ...prev,
+    onFormDataChange({
+      ...formData,
       ubicacion: location,
-      direccion: location.address || prev.direccion,
-    }));
+      direccion: location.address || formData.direccion
+    });
     setIsMapVisible(false);
-
-    // Limpiar error de dirección si existía
-    if (errors.direccion) {
-      setErrors(prev => ({ ...prev, direccion: undefined }));
-    }
   };
 
   return (
     <ScrollView style={{ flex: 1 }}>
       <YStack gap="$4" p="$4" pb="$6">
-        {/* Sección: Información Básica */}
+        {/* Información Básica */}
         <Card elevate p="$4" gap="$4">
           <H4 color="$textPrimary">📝 Información Básica</H4>
-
           <YStack gap="$3">
             <YStack gap="$2">
               <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
@@ -142,14 +63,13 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               <Input
                 placeholder="Describe brevemente el problema"
                 value={formData.titulo}
-                onChangeText={(text) => updateField('titulo', text)}
+                onChangeText={(text) =>
+                  onFormDataChange({ ...formData, titulo: text })
+                }
                 bg="white"
-                borderColor={errors.titulo ? "$error" : "$textDisabled"}
+                borderColor="$textDisabled"
                 focusStyle={{ borderColor: '$primary' }}
               />
-              {errors.titulo && (
-                <Text fontSize="$3" color="$error">{errors.titulo}</Text>
-              )}
             </YStack>
 
             <YStack gap="$2">
@@ -159,32 +79,30 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               <TextArea
                 placeholder="Explica en detalle lo que está ocurriendo..."
                 value={formData.descripcion}
-                onChangeText={(text) => updateField('descripcion', text)}
+                onChangeText={(text) =>
+                  onFormDataChange({ ...formData, descripcion: text })
+                }
                 bg="white"
-                borderColor={errors.descripcion ? "$error" : "$textDisabled"}
+                borderColor="$textDisabled"
                 focusStyle={{ borderColor: '$primary' }}
                 numberOfLines={4}
               />
-              {errors.descripcion && (
-                <Text fontSize="$3" color="$error">{errors.descripcion}</Text>
-              )}
             </YStack>
           </YStack>
         </Card>
 
-        {/* Sección: Categorización */}
+        {/* Categorización */}
         <Card elevate p="$4" gap="$4">
           <H4 color="$textPrimary">🏷️ Categorización</H4>
-
           <YStack gap="$3">
             <Selector
               title="Departamento"
               placeholder="Selecciona un departamento"
               selectedValue={formData.departamento}
               options={departamentos}
-              onSelect={(value) => updateField('departamento', value)}
-              isLoading={isLoadingDepartamentos}
-              error={errors.departamento || errorDepartamentos}
+              onSelect={(value) =>
+                onFormDataChange({ ...formData, departamento: value })
+              }
               color="primary"
             />
 
@@ -193,28 +111,30 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               placeholder="Selecciona una categoría"
               selectedValue={formData.categoria}
               options={categorias}
-              onSelect={(value) => updateField('categoria', value)}
-              isLoading={isLoadingCategorias}
-              error={errors.categoria || errorCategorias}
+              onSelect={(value) =>
+                onFormDataChange({ ...formData, categoria: value })
+              }
               color="secondary"
             />
           </YStack>
         </Card>
 
-        {/* Sección: Ubicación */}
+        {/* Ubicación */}
         <UbicacionSection
           direccion={formData.direccion}
           ubicacion={formData.ubicacion}
-          error={errors.direccion}
-          onDireccionChange={(value) => updateField('direccion', value)}
+          onDireccionChange={(value) =>
+            onFormDataChange({ ...formData, direccion: value })
+          }
           onOpenMap={() => setIsMapVisible(true)}
-          onRemoveLocation={() => setFormData(prev => ({ ...prev, ubicacion: undefined }))}
+          onRemoveLocation={() =>
+            onFormDataChange({ ...formData, ubicacion: undefined })
+          }
         />
 
-        {/* Sección: Evidencias */}
+        {/* Evidencias */}
         <Card elevate p="$4" gap="$4">
           <H4 color="$textPrimary">📷 Evidencias (Opcional)</H4>
-
           <XStack gap="$3">
             <Button
               f={1}
@@ -223,7 +143,7 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               borderColor="$primary"
               borderWidth={2}
               color="$primary"
-              onPress={() => console.log('Abrir cámara')}
+              onPress={onTomarFoto}
             >
               <Ionicons name="camera" size={20} color="#E67E22" />
               <Text color="$primary" ml="$2">Cámara</Text>
@@ -236,7 +156,7 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               borderColor="$primary"
               borderWidth={2}
               color="$primary"
-              onPress={() => console.log('Abrir galería')}
+              onPress={onTomarFoto}
             >
               <Ionicons name="images" size={20} color="#E67E22" />
               <Text color="$primary" ml="$2">Galería</Text>
@@ -250,8 +170,8 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
           bg="$primary"
           color="white"
           fontWeight="bold"
-          onPress={handleSubmit}
-          disabled={isSubmitting}
+          onPress={onSubmit}
+          disabled={loading}
           style={{
             shadowColor: '#E67E22',
             shadowOffset: { width: 0, height: 4 },
@@ -265,7 +185,7 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
             elevation: 4,
           }}
         >
-          {isSubmitting ? (
+          {loading ? (
             <Text color="white">Enviando...</Text>
           ) : (
             <>

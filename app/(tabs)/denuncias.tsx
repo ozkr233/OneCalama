@@ -1,9 +1,10 @@
+// denuncias.tsx
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native';
-import DenunciaForm, { DenunciaFormData } from '../../src/components/forms/DenunciaForm';
+import { SafeAreaView, Alert } from 'react-native';
+import DenunciaForm from '../../src/components/forms/DenunciaForm';
+import { DenunciaFormData } from '../../src/types';
 import AppHeader from '../../src/components/layout/AppHeader';
 import { DenunciasService } from '../../src/services';
-import { Alert } from 'react-native';
 
 export default function DenunciasScreen() {
   const [formData, setFormData] = useState<DenunciaFormData>({
@@ -11,16 +12,14 @@ export default function DenunciasScreen() {
     descripcion: '',
     categoria: '',
     departamento: '',
-    nombreCalle: '',
-    numeroCalle: '',
-    evidencias: [],
+    direccion: '',
+    ubicacion: undefined,
   });
 
   const [loading, setLoading] = useState(false);
   const [departamentos, setDepartamentos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
 
-  // Cargar datos iniciales desde la API
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -28,8 +27,6 @@ export default function DenunciasScreen() {
   const loadInitialData = async () => {
     try {
       console.log('🔄 Cargando datos desde la API...');
-
-      // Cargar departamentos y categorías en paralelo
       const [deptData, catData] = await Promise.all([
         DenunciasService.getDepartamentos(),
         DenunciasService.getCategorias(),
@@ -54,7 +51,6 @@ export default function DenunciasScreen() {
     try {
       console.log('📤 Enviando publicación:', formData);
 
-      // Llamada real a la API usando el service
       const nuevaPublicacion = await DenunciasService.crearPublicacion(formData);
 
       console.log('✅ Publicación creada:', nuevaPublicacion);
@@ -66,15 +62,13 @@ export default function DenunciasScreen() {
           {
             text: 'OK',
             onPress: () => {
-              // Limpiar formulario después de envío exitoso
               setFormData({
                 titulo: '',
                 descripcion: '',
                 categoria: '',
                 departamento: '',
-                nombreCalle: '',
-                numeroCalle: '',
-                evidencias: [],
+                direccion: '',
+                ubicacion: undefined,
               });
             }
           }
@@ -140,28 +134,23 @@ export default function DenunciasScreen() {
   };
 
   return (
-    <>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
-        {/* Header unificado - Solo título de pantalla */}
-        <AppHeader
-          screenTitle="Nueva Denuncia"
-          screenSubtitle="Reporta problemas en tu comunidad"
-          screenIcon="document-text"
-          showAppInfo={false}
-        />
-
-        {/* Formulario */}
-        <DenunciaForm
-          formData={formData}
-          onFormDataChange={setFormData}
-          onSubmit={handleSubmit}
-          onTomarFoto={handleTomarFoto}
-          onUsarUbicacion={handleUsarUbicacion}
-          loading={loading}
-          categorias={categorias}
-          departamentos={departamentos}
-        />
-      </SafeAreaView>
-    </>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
+      <AppHeader
+        screenTitle="Nueva Denuncia"
+        screenSubtitle="Reporta problemas en tu comunidad"
+        screenIcon="document-text"
+        showAppInfo={false}
+      />
+      <DenunciaForm
+        formData={formData}
+        onFormDataChange={setFormData}
+        onSubmit={handleSubmit}
+        onTomarFoto={handleTomarFoto}
+        onUsarUbicacion={handleUsarUbicacion}
+        loading={loading}
+        categorias={categorias}
+        departamentos={departamentos}
+      />
+    </SafeAreaView>
   );
 }
