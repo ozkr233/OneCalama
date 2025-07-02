@@ -1,12 +1,10 @@
-// app/(tabs)/denuncias.tsx - CORREGIDO CON TU APPHEADER
+// denuncias.tsx
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Alert } from 'react-native';
-import { YStack, Text, H4 } from 'tamagui';
 import DenunciaForm from '../../src/components/forms/DenunciaForm';
-import { DenunciaFormData, Categoria, Departamento } from '../../src/types/denuncias';
+import { DenunciaFormData } from '../../src/types';
 import AppHeader from '../../src/components/layout/AppHeader';
 import { DenunciasService } from '../../src/services';
-import LoadingSpinner from '../../src/components/ui/Loading';
 
 export default function DenunciasScreen() {
   const [formData, setFormData] = useState<DenunciaFormData>({
@@ -19,10 +17,8 @@ export default function DenunciasScreen() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [departamentos, setDepartamentos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
 
   useEffect(() => {
     loadInitialData();
@@ -30,230 +26,131 @@ export default function DenunciasScreen() {
 
   const loadInitialData = async () => {
     try {
-      setInitialLoading(true);
-      setError(null);
-      console.log('[API] Cargando datos desde la API...');
-
-      // Usar Promise.allSettled para manejar errores individualmente
-      const [deptResult, catResult] = await Promise.allSettled([
+      console.log('🔄 Cargando datos desde la API...');
+      const [deptData, catData] = await Promise.all([
         DenunciasService.getDepartamentos(),
         DenunciasService.getCategorias(),
       ]);
 
-      // Procesar departamentos
-      if (deptResult.status === 'fulfilled') {
-        setDepartamentos(deptResult.value);
-        console.log('[API] Departamentos cargados:', deptResult.value.length);
-      } else {
-        console.error('[API] Error cargando departamentos:', deptResult.reason);
-      }
+      setDepartamentos(deptData);
+      setCategorias(catData);
 
-      // Procesar categorías
-      if (catResult.status === 'fulfilled') {
-        setCategorias(catResult.value);
-        console.log('[API] Categorías cargadas:', catResult.value.length);
-      } else {
-        console.error('[API] Error cargando categorías:', catResult.reason);
-      }
-
-      // Si ambos fallaron, mostrar error
-      if (deptResult.status === 'rejected' && catResult.status === 'rejected') {
-        setError('No se pudieron cargar los datos necesarios');
-        Alert.alert(
-          'Error de Conexión',
-          'No se pudieron cargar los datos necesarios. Verifica tu conexión a internet.',
-          [
-            { text: 'Reintentar', onPress: loadInitialData },
-            { text: 'Continuar', style: 'cancel' }
-          ]
-        );
-      }
+      console.log('✅ Datos cargados:', {
+        departamentos: deptData.length,
+        categorias: catData.length
+      });
 
     } catch (error) {
-      console.error('[API] Error cargando datos iniciales:', error);
-      setError('Error de conexión');
-      Alert.alert(
-        'Error',
-        'No se pudieron cargar los datos necesarios. Se usarán datos por defecto.',
-        [
-          { text: 'Reintentar', onPress: loadInitialData },
-          { text: 'OK', style: 'cancel' }
-        ]
-      );
-    } finally {
-      setInitialLoading(false);
+      console.error('❌ Error cargando datos iniciales:', error);
+      Alert.alert('Error', 'No se pudieron cargar los datos necesarios. Se usarán datos por defecto.');
     }
   };
 
   const handleSubmit = async () => {
-    if (loading) return; // Prevenir doble envío
-
-    // Validación básica
-    if (!formData.titulo.trim() || !formData.descripcion.trim()) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios.');
-      return;
-    }
-
-    if (!formData.categoria || !formData.departamento) {
-      Alert.alert('Error', 'Por favor selecciona una categoría y departamento.');
-      return;
-    }
-
-    if (!formData.ubicacion) {
-      Alert.alert('Error', 'Por favor proporciona la ubicación de la denuncia.');
-      return;
-    }
-
     setLoading(true);
-    setError(null);
-
     try {
-      console.log('[API] Enviando denuncia:', formData);
+      console.log('📤 Enviando publicación:', formData);
 
-      const nuevaDenuncia = await DenunciasService.crearPublicacion(formData);
+      const nuevaPublicacion = await DenunciasService.crearPublicacion(formData);
 
-      console.log('[API] Denuncia creada:', nuevaDenuncia);
+      console.log('✅ Publicación creada:', nuevaPublicacion);
 
       Alert.alert(
-        'Denuncia Enviada',
-        `Tu denuncia ha sido registrada con el código: ${nuevaDenuncia.codigo}. Te notificaremos sobre su progreso.`,
+        '✅ Denuncia Enviada',
+        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. Te notificaremos sobre su progreso.`,
         [
           {
-            text: 'Ver Historial',
+            text: 'OK',
             onPress: () => {
-              // TODO: Navegar al historial
-              resetForm();
+              setFormData({
+                titulo: '',
+                descripcion: '',
+                categoria: '',
+                departamento: '',
+                direccion: '',
+                ubicacion: undefined,
+              });
             }
-          },
-          {
-            text: 'Nueva Denuncia',
-            onPress: resetForm,
-            style: 'cancel'
           }
         ]
       );
 
     } catch (error) {
-      console.error('[API] Error enviando denuncia:', error);
-      setError(error.message || 'Error desconocido');
-
-      let errorMessage = 'No se pudo enviar la denuncia. ';
-
-      if (error.message?.includes('Tiempo de espera')) {
-        errorMessage += 'La conexión está tardando mucho. Verifica tu internet.';
-      } else if (error.message?.includes('400')) {
-        errorMessage += 'Los datos enviados no son válidos. Revisa la información.';
-      } else if (error.message?.includes('401')) {
-        errorMessage += 'Tu sesión ha expirado. Inicia sesión nuevamente.';
-      } else if (error.message?.includes('500')) {
-        errorMessage += 'Error del servidor. Intenta más tarde.';
-      } else {
-        errorMessage += 'Intenta nuevamente.';
-      }
-
-      Alert.alert('Error', errorMessage, [
-        { text: 'Reintentar', onPress: handleSubmit },
-        { text: 'Cancelar', style: 'cancel' }
-      ]);
+      console.error('❌ Error enviando publicación:', error);
+      Alert.alert(
+        '❌ Error',
+        'No se pudo enviar la denuncia. Verifica tu conexión e intenta nuevamente.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      titulo: '',
-      descripcion: '',
-      categoria: '',
-      departamento: '',
-      direccion: '',
-      ubicacion: undefined,
-    });
-    setError(null);
-  };
-
-  const handleFormChange = (field: keyof DenunciaFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Limpiar error cuando el usuario empieza a escribir
-    if (error) {
-      setError(null);
-    }
-  };
-
-  if (initialLoading) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-        <AppHeader
-          screenTitle="Nueva Denuncia"
-          screenSubtitle="Reporta problemas en tu comunidad"
-          screenIcon="add-circle-outline"
-          showNotifications={false}
-        />
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$4">
-          <LoadingSpinner />
-          <Text marginTop="$3" color="$gray10">
-            Cargando datos necesarios...
-          </Text>
-        </YStack>
-      </SafeAreaView>
+  const handleTomarFoto = () => {
+    Alert.alert(
+      '📷 Agregar Evidencia',
+      'Selecciona una opción',
+      [
+        {
+          text: 'Cámara',
+          onPress: () => {
+            console.log('📸 Abrir cámara');
+            Alert.alert('🚧 En desarrollo', 'La función de cámara estará disponible próximamente');
+          }
+        },
+        {
+          text: 'Galería',
+          onPress: () => {
+            console.log('🖼️ Abrir galería');
+            Alert.alert('🚧 En desarrollo', 'La función de galería estará disponible próximamente');
+          }
+        },
+        { text: 'Cancelar', style: 'cancel' },
+      ]
     );
-  }
+  };
+
+  const handleUsarUbicacion = async () => {
+    console.log('📍 Obteniendo ubicación GPS');
+    Alert.alert(
+      '📍 Ubicación GPS',
+      '¿Deseas usar tu ubicación actual para completar automáticamente la dirección?',
+      [
+        {
+          text: 'Sí, usar GPS',
+          onPress: async () => {
+            try {
+              console.log('🛰️ Obteniendo coordenadas...');
+              Alert.alert('🚧 En desarrollo', 'La función de GPS estará disponible próximamente');
+            } catch (error) {
+              console.error('Error obteniendo ubicación:', error);
+              Alert.alert('Error', 'No se pudo obtener la ubicación');
+            }
+          }
+        },
+        { text: 'Cancelar', style: 'cancel' }
+      ]
+    );
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
       <AppHeader
         screenTitle="Nueva Denuncia"
         screenSubtitle="Reporta problemas en tu comunidad"
-        screenIcon="add-circle-outline"
-        showNotifications={true}
+        screenIcon="document-text"
+        showAppInfo={false}
       />
-
-      <YStack flex={1} padding="$4">
-        {error && (
-          <YStack
-            backgroundColor="$red2"
-            padding="$3"
-            borderRadius="$4"
-            marginBottom="$4"
-            borderWidth={1}
-            borderColor="$red6"
-          >
-            <Text color="$red10" textAlign="center">
-              {error}
-            </Text>
-          </YStack>
-        )}
-
-        <DenunciaForm
-          formData={formData}
-          onFormChange={handleFormChange}
-          onSubmit={handleSubmit}
-          loading={loading}
-          departamentos={departamentos}
-          categorias={categorias}
-          disabled={loading}
-        />
-
-        {(departamentos.length === 0 || categorias.length === 0) && !initialLoading && (
-          <YStack
-            backgroundColor="$yellow2"
-            padding="$3"
-            borderRadius="$4"
-            marginTop="$4"
-            borderWidth={1}
-            borderColor="$yellow6"
-          >
-            <Text color="$yellow11" textAlign="center" fontSize="$3">
-              Algunos datos no se cargaron correctamente.
-              La funcionalidad puede estar limitada.
-            </Text>
-          </YStack>
-        )}
-      </YStack>
+      <DenunciaForm
+        formData={formData}
+        onFormDataChange={setFormData}
+        onSubmit={handleSubmit}
+        onTomarFoto={handleTomarFoto}
+        onUsarUbicacion={handleUsarUbicacion}
+        loading={loading}
+        categorias={categorias}
+        departamentos={departamentos}
+      />
     </SafeAreaView>
   );
 }

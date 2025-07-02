@@ -1,16 +1,17 @@
 // src/services/denuncias.ts - OPTIMIZADO
 import ApiClient from './api';
 import {
-  DenunciaFormData,
-  CreatePublicacionPayload,
-  CreatePublicacionResponse,
-  Categoria,
-  Departamento,
-  JuntaVecinal,
   Publicacion,
-  Anuncio,
-  ApiResponse
+  DepartamentoMunicipal,
+  Categoria,
+  JuntaVecinal,
+  SituacionPublicacion,
+  CreatePublicacionPayload,
+  ApiResponse,
+  DenunciaFormData,
+  Evidencia
 } from '../types/denuncias';
+import { anunciosMockData } from '../data/anunciosMock';
 
 class DenunciasService {
   private readonly endpoints = {
@@ -277,5 +278,6 @@ class DenunciasService {
     return await ApiClient.checkConnection();
   }
 }
+
 
 export default new DenunciasService();
