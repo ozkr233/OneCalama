@@ -1,18 +1,18 @@
-// src/components/forms/DenunciaForm.tsx
-import React from 'react';
+// src/components/forms/DenunciaForm.tsx - REFACTORIZADO CON EVIDENCIAS
+import React, { useState } from 'react';
 import { Modal, ScrollView } from 'react-native';
-import {
-  Text,
-  YStack,
-  XStack,
-  Button,
-  Card,
-  H4,
-  Input,
-  TextArea
-} from 'tamagui';
+import { Text, YStack, XStack, Button, Card, H4 } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
 import { DenunciaFormData, LocationData } from '../../types';
+
+// Componentes refactorizados
+import BasicInfoSection from './BasicInfoSection';
+import AIAssistantSection from './AIAssistantSection';
+import FormProgressCard from './FormProgressCard';
+import SubmitButton from './SubmitButton';
+import EvidenceSection from './EvidenceSection';
+
+// Componentes existentes
 import Selector from './Selector';
 import MapSelector from './MapSelector';
 import UbicacionSection from './UbicacionSection';
@@ -21,8 +21,6 @@ interface DenunciaFormProps {
   formData: DenunciaFormData;
   onFormDataChange: (data: DenunciaFormData) => void;
   onSubmit: () => void;
-  onTomarFoto?: () => void;
-  onUsarUbicacion?: () => void;
   loading?: boolean;
   categorias: any[];
   departamentos: any[];
@@ -32,13 +30,17 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
   formData,
   onFormDataChange,
   onSubmit,
-  onTomarFoto,
-  onUsarUbicacion,
   loading = false,
   categorias,
   departamentos
 }) => {
-  const [isMapVisible, setIsMapVisible] = React.useState(false);
+  // Estados locales
+  const [isMapVisible, setIsMapVisible] = useState(false);
+
+  // Handlers centralizados
+  const handleInputChange = (field: keyof DenunciaFormData, value: any) => {
+    onFormDataChange({ ...formData, [field]: value });
+  };
 
   const handleLocationSelect = (location: LocationData) => {
     onFormDataChange({
@@ -49,73 +51,82 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
     setIsMapVisible(false);
   };
 
-  return (
-    <ScrollView style={{ flex: 1 }}>
-      <YStack gap="$4" p="$4" pb="$6">
-        {/* Información Básica */}
-        <Card elevate p="$4" gap="$4">
-          <H4 color="$textPrimary">📝 Información Básica</H4>
-          <YStack gap="$3">
-            <YStack gap="$2">
-              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
-                Título *
-              </Text>
-              <Input
-                placeholder="Describe brevemente el problema"
-                value={formData.titulo}
-                onChangeText={(text) =>
-                  onFormDataChange({ ...formData, titulo: text })
-                }
-                bg="white"
-                borderColor="$textDisabled"
-                focusStyle={{ borderColor: '$primary' }}
-              />
-            </YStack>
+  const handleAISuggestion = (suggestions: Partial<DenunciaFormData>) => {
+    onFormDataChange({ ...formData, ...suggestions });
+  };
 
-            <YStack gap="$2">
-              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
-                Descripción Detallada *
-              </Text>
-              <TextArea
-                placeholder="Explica en detalle lo que está ocurriendo..."
-                value={formData.descripcion}
-                onChangeText={(text) =>
-                  onFormDataChange({ ...formData, descripcion: text })
-                }
-                bg="white"
-                borderColor="$textDisabled"
-                focusStyle={{ borderColor: '$primary' }}
-                numberOfLines={4}
-              />
-            </YStack>
-          </YStack>
-        </Card>
+  // Validaciones
+  const shouldShowAI = formData.titulo.length > 3 || formData.descripcion.length > 3;
+
+  const isFormValid = Boolean(
+    formData.titulo?.length >= 10 &&
+    formData.descripcion?.length >= 20 &&
+    formData.categoria &&
+    formData.departamento
+  );
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <YStack gap="$4" p="$4" pb="$6">
+
+        {/* Información Básica */}
+        <BasicInfoSection
+          formData={formData}
+          onChange={handleInputChange}
+        />
+
+        {/* Asistente IA (solo si hay texto) */}
+        {shouldShowAI && (
+          <AIAssistantSection
+            formData={formData}
+            onApplySuggestion={handleAISuggestion}
+            categorias={categorias}
+            departamentos={departamentos}
+          />
+        )}
 
         {/* Categorización */}
         <Card elevate p="$4" gap="$4">
           <H4 color="$textPrimary">🏷️ Categorización</H4>
-          <YStack gap="$3">
-            <Selector
-              title="Departamento"
-              placeholder="Selecciona un departamento"
-              selectedValue={formData.departamento}
-              options={departamentos}
-              onSelect={(value) =>
-                onFormDataChange({ ...formData, departamento: value })
-              }
-              color="primary"
-            />
 
-            <Selector
-              title="Categoría"
-              placeholder="Selecciona una categoría"
-              selectedValue={formData.categoria}
-              options={categorias}
-              onSelect={(value) =>
-                onFormDataChange({ ...formData, categoria: value })
-              }
-              color="secondary"
-            />
+          <YStack gap="$3">
+            <YStack gap="$2">
+              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
+                Departamento Municipal *
+              </Text>
+              <Selector
+                title=""
+                placeholder="Selecciona el departamento responsable"
+                selectedValue={formData.departamento}
+                options={departamentos}
+                onSelect={(value) => handleInputChange('departamento', value)}
+                color="primary"
+              />
+              {formData.departamento && (
+                <Text fontSize="$3" color="$success">
+                  ✅ Departamento seleccionado
+                </Text>
+              )}
+            </YStack>
+
+            <YStack gap="$2">
+              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
+                Categoría del Problema *
+              </Text>
+              <Selector
+                title=""
+                placeholder="Selecciona la categoría que mejor describe el problema"
+                selectedValue={formData.categoria}
+                options={categorias}
+                onSelect={(value) => handleInputChange('categoria', value)}
+                color="secondary"
+              />
+              {formData.categoria && (
+                <Text fontSize="$3" color="$success">
+                  ✅ Categoría seleccionada
+                </Text>
+              )}
+            </YStack>
           </YStack>
         </Card>
 
@@ -123,85 +134,53 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
         <UbicacionSection
           direccion={formData.direccion}
           ubicacion={formData.ubicacion}
-          onDireccionChange={(value) =>
-            onFormDataChange({ ...formData, direccion: value })
-          }
+          onDireccionChange={(value) => handleInputChange('direccion', value)}
           onOpenMap={() => setIsMapVisible(true)}
-          onRemoveLocation={() =>
-            onFormDataChange({ ...formData, ubicacion: undefined })
-          }
+          onRemoveLocation={() => onFormDataChange({ ...formData, ubicacion: undefined })}
         />
 
-        {/* Evidencias */}
-        <Card elevate p="$4" gap="$4">
-          <H4 color="$textPrimary">📷 Evidencias (Opcional)</H4>
-          <XStack gap="$3">
-            <Button
-              f={1}
-              size="$4"
-              bg="white"
-              borderColor="$primary"
-              borderWidth={2}
-              color="$primary"
-              onPress={onTomarFoto}
-            >
-              <Ionicons name="camera" size={20} color="#E67E22" />
-              <Text color="$primary" ml="$2">Cámara</Text>
-            </Button>
+        {/* Evidencias con funcionalidad completa */}
+        <EvidenceSection
+          evidences={formData.evidencias || []}
+          onEvidencesChange={(evidences) => handleInputChange('evidencias', evidences)}
+          maxImages={5}
+        />
 
-            <Button
-              f={1}
-              size="$4"
-              bg="white"
-              borderColor="$primary"
-              borderWidth={2}
-              color="$primary"
-              onPress={onTomarFoto}
-            >
-              <Ionicons name="images" size={20} color="#E67E22" />
-              <Text color="$primary" ml="$2">Galería</Text>
-            </Button>
-          </XStack>
-        </Card>
+        {/* Progreso del formulario */}
+        <FormProgressCard formData={formData} />
 
         {/* Botón de envío */}
-        <Button
-          size="$5"
-          bg="$primary"
-          color="white"
-          fontWeight="bold"
-          onPress={onSubmit}
-          disabled={loading}
-          style={{
-            shadowColor: '#E67E22',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 8,
-          }}
-          pressStyle={{
-            scale: 0.98,
-            shadowOpacity: 0.2,
-            elevation: 4,
-          }}
-        >
-          {loading ? (
-            <Text color="white">Enviando...</Text>
-          ) : (
-            <>
-              <Ionicons name="send" size={20} color="white" />
-              <Text color="white" fontWeight="bold" ml="$2">
-                Enviar Denuncia
-              </Text>
-            </>
-          )}
-        </Button>
+        <SubmitButton
+          isValid={isFormValid}
+          loading={loading}
+          onSubmit={onSubmit}
+        />
 
-        {/* Modal del mapa */}
+        {/* Información adicional */}
+        <Card elevate p="$3" gap="$2">
+          <XStack ai="center" gap="$2">
+            <Ionicons name="information-circle" size={18} color="#667eea" />
+            <Text fontSize="$4" fontWeight="bold" color="#667eea">
+              Información importante
+            </Text>
+          </XStack>
+          <Text fontSize="$3" color="$textSecondary" lineHeight="$1">
+            • Una vez enviada la denuncia, recibirás un código de seguimiento
+          </Text>
+          <Text fontSize="$3" color="$textSecondary" lineHeight="$1">
+            • El asistente IA sugiere la categoría y departamento más apropiados
+          </Text>
+          <Text fontSize="$3" color="$textSecondary" lineHeight="$1">
+            • Las evidencias (fotos) aceleran significativamente el procesamiento
+          </Text>
+        </Card>
+
+        {/* Modal del Mapa */}
         <Modal
           visible={isMapVisible}
           animationType="slide"
           presentationStyle="fullScreen"
+          onRequestClose={() => setIsMapVisible(false)}
         >
           <MapSelector
             onLocationSelect={handleLocationSelect}

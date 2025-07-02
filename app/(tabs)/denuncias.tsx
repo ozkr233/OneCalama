@@ -1,12 +1,13 @@
-// denuncias.tsx
+// app/(tabs)/denuncias.tsx - ACTUALIZADO CON EVIDENCIAS
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Alert } from 'react-native';
 import DenunciaForm from '../../src/components/forms/DenunciaForm';
-import { DenunciaFormData } from '../../src/types';
+import { DenunciaFormData } from '../../src/types/denuncias';
 import AppHeader from '../../src/components/layout/AppHeader';
 import { DenunciasService } from '../../src/services';
 
 export default function DenunciasScreen() {
+  // ACTUALIZADO: Estado inicial con evidencias
   const [formData, setFormData] = useState<DenunciaFormData>({
     titulo: '',
     descripcion: '',
@@ -14,6 +15,7 @@ export default function DenunciasScreen() {
     departamento: '',
     direccion: '',
     ubicacion: undefined,
+    evidencias: [], // ← NUEVO: Array de evidencias vacío
   });
 
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ export default function DenunciasScreen() {
     setLoading(true);
     try {
       console.log('📤 Enviando publicación:', formData);
+      console.log('📷 Evidencias a enviar:', formData.evidencias.length);
 
       const nuevaPublicacion = await DenunciasService.crearPublicacion(formData);
 
@@ -57,11 +60,13 @@ export default function DenunciasScreen() {
 
       Alert.alert(
         '✅ Denuncia Enviada',
-        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. Te notificaremos sobre su progreso.`,
+        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. ${formData.evidencias.length > 0 ?
+          `Se subieron ${formData.evidencias.length} evidencia(s).` : ''} Te notificaremos sobre su progreso.`,
         [
           {
             text: 'OK',
             onPress: () => {
+              // ACTUALIZADO: Reset completo del formulario incluyendo evidencias
               setFormData({
                 titulo: '',
                 descripcion: '',
@@ -69,6 +74,7 @@ export default function DenunciasScreen() {
                 departamento: '',
                 direccion: '',
                 ubicacion: undefined,
+                evidencias: [], // ← IMPORTANTE: Limpiar evidencias
               });
             }
           }
@@ -86,52 +92,8 @@ export default function DenunciasScreen() {
     }
   };
 
-  const handleTomarFoto = () => {
-    Alert.alert(
-      '📷 Agregar Evidencia',
-      'Selecciona una opción',
-      [
-        {
-          text: 'Cámara',
-          onPress: () => {
-            console.log('📸 Abrir cámara');
-            Alert.alert('🚧 En desarrollo', 'La función de cámara estará disponible próximamente');
-          }
-        },
-        {
-          text: 'Galería',
-          onPress: () => {
-            console.log('🖼️ Abrir galería');
-            Alert.alert('🚧 En desarrollo', 'La función de galería estará disponible próximamente');
-          }
-        },
-        { text: 'Cancelar', style: 'cancel' },
-      ]
-    );
-  };
-
-  const handleUsarUbicacion = async () => {
-    console.log('📍 Obteniendo ubicación GPS');
-    Alert.alert(
-      '📍 Ubicación GPS',
-      '¿Deseas usar tu ubicación actual para completar automáticamente la dirección?',
-      [
-        {
-          text: 'Sí, usar GPS',
-          onPress: async () => {
-            try {
-              console.log('🛰️ Obteniendo coordenadas...');
-              Alert.alert('🚧 En desarrollo', 'La función de GPS estará disponible próximamente');
-            } catch (error) {
-              console.error('Error obteniendo ubicación:', error);
-              Alert.alert('Error', 'No se pudo obtener la ubicación');
-            }
-          }
-        },
-        { text: 'Cancelar', style: 'cancel' }
-      ]
-    );
-  };
+  // ELIMINADO: handleTomarFoto (ya no se necesita, lo maneja EvidenceSection)
+  // ELIMINADO: handleUsarUbicacion (lo maneja UbicacionSection)
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
@@ -145,8 +107,6 @@ export default function DenunciasScreen() {
         formData={formData}
         onFormDataChange={setFormData}
         onSubmit={handleSubmit}
-        onTomarFoto={handleTomarFoto}
-        onUsarUbicacion={handleUsarUbicacion}
         loading={loading}
         categorias={categorias}
         departamentos={departamentos}

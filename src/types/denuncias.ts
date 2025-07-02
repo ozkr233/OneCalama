@@ -1,164 +1,174 @@
-// src/types/denuncias.ts - CORREGIDO
+// src/types/denuncias.ts - ACTUALIZADO CON EVIDENCIAS
+// Tipos basados en los modelos reales de Django
+
+// NUEVO: Tipo para evidencias locales (antes de subir al servidor)
+export interface Evidence {
+  id: string;
+  uri: string;
+  type: 'image' | 'video';
+  fileName: string;
+  fileSize?: number;
+  uploadedAt?: string;
+}
+
+// ACTUALIZADO: DenunciaFormData con evidencias locales
 export interface DenunciaFormData {
   titulo: string;
-descripcion: string;
-categoria: string | number; // Flexible para UI y API
-departamento: string | number; // Flexible para UI y API
-direccion: string;
-ubicacion?: {
-latitud: number;
-longitud: number;
-};
-evidencias?: File[] | string[]; // Archivos o URLs
+  descripcion: string;
+  categoria: string;  // ID como string para el formulario
+  departamento: string; // ID como string para el formulario
+  direccion: string; // ACTUALIZADO: campo unificado para dirección
+  ubicacion?: LocationData; // NUEVO: datos del mapa
+  evidencias: Evidence[]; // NUEVO: evidencias locales
 }
 
-// Tipos base de la API
+// NUEVO: Tipo para datos de ubicación del mapa
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
+// Tipo para evidencias en el servidor (formato backend)
+export interface Evidencia {
+  id?: number;
+  archivo: string; // CloudinaryField URL
+  fecha: string;
+  extension: string;
+  publicacion?: number;
+}
+
+// Exactamente como en models.py
+export interface DepartamentoMunicipal {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
+
 export interface Categoria {
-id: number;
-nombre: string;
-descripcion?: string;
-activo: boolean;
-}
-
-export interface Departamento {
-id: number;
-nombre: string;
-descripcion?: string;
-activo: boolean;
+  id: number;
+  departamento: DepartamentoMunicipal; // Como en serializers.py - objeto completo
+  nombre: string;
+  descripcion?: string;
 }
 
 export interface JuntaVecinal {
-id: number;
-nombre: string;
-sector: string;
+  id: number;
+  nombre_junta?: string;
+  nombre_calle?: string;
+  numero_calle: number;
+  departamento?: string;
+  villa?: string;
+  comuna?: string;
+  latitud: number; // DecimalField(max_digits=9, decimal_places=6)
+  longitud: number; // DecimalField(max_digits=9, decimal_places=6)
 }
 
-export interface Situacion {
-id: number;
-nombre: string;
-descripcion?: string;
+export interface SituacionPublicacion {
+  id: number;
+  nombre: string;
+  descripcion?: string;
 }
 
+// Basado en tu modelo Usuario
 export interface Usuario {
-id: number;
-username: string;
-email: string;
-first_name: string;
-last_name: string;
+  id: number;
+  rut: string; // USERNAME_FIELD
+  numero_telefonico_movil?: string;
+  nombre: string;
+  es_administrador: boolean;
+  email: string;
+  fecha_registro: string;
+  esta_activo: boolean;
 }
 
-// Publicacion principal
+// Exactamente como en tu modelo Publicacion
 export interface Publicacion {
-id: number;
-codigo: string; // Código único generado
-titulo: string;
-descripcion: string;
-fecha_creacion: string;
-fecha_actualizacion: string;
-nombre_calle?: string;
-numero_calle: number;
-latitud: number;
-longitud: number;
-activo: boolean;
-categoria: Categoria;
-departamento: Departamento;
-usuario: Usuario;
-junta_vecinal: JuntaVecinal;
-situacion?: Situacion;
-evidencias: Evidencia[];
+  id: number;
+  codigo: string; // Auto-generado P-YYYY-MM-XXXXXXXX
+  titulo: string;
+  descripcion: string;
+  fecha_publicacion: string;
+  nombre_calle?: string;
+  numero_calle: number;
+  latitud: number;
+  longitud: number;
+  usuario: Usuario; // Como en PublicacionListSerializer
+  junta_vecinal: JuntaVecinal;
+  categoria: Categoria;
+  departamento: DepartamentoMunicipal;
+  situacion?: SituacionPublicacion;
+  evidencias?: Evidencia[]; // evidencia_set en serializer
 }
 
-export interface Evidencia {
-id: number;
-publicacion: number;
-evidencia: string; // CloudinaryField URL
-fecha: string;
-extension: string;
+export interface RespuestaMunicipal {
+  id: number;
+  usuario: Usuario;
+  publicacion: Publicacion;
+  fecha: string;
+  descripcion: string;
+  acciones: string;
+  situacion_inicial: string;
+  situacion_posterior: string;
 }
 
-// Anuncios
-export interface Anuncio {
-id: number;
-titulo: string;
-descripcion: string;
-fecha_creacion: string;
-fecha_actualizacion: string;
-activo: boolean;
-departamento: Departamento;
-imagenes: ImagenAnuncio[];
+export interface AnuncioMunicipal {
+  id: number;
+  usuario: Usuario;
+  titulo: string;
+  subtitulo: string;
+  estado: string;
+  descripcion: string;
+  categoria: Categoria;
+  fecha: string;
+  imagenes?: ImagenAnuncio[];
 }
 
 export interface ImagenAnuncio {
-id: number;
-anuncio: number;
-imagen: string; // CloudinaryField
-fecha: string;
-extension: string;
+  id: number;
+  anuncio: number;
+  imagen: string; // CloudinaryField
+  fecha: string;
+  extension: string;
 }
 
 // Para la API response con paginación
 export interface ApiResponse<T> {
-results: T[];
-count: number;
-next?: string;
-previous?: string;
+  results: T[];
+  count: number;
+  next?: string;
+  previous?: string;
 }
 
-// Payload optimizado para crear publicación
+// Como espera tu PublicacionCreateUpdateSerializer
 export interface CreatePublicacionPayload {
-titulo: string;
-descripcion: string;
-categoria: number; // ID de categoria
-departamento: number; // ID de departamento
-nombre_calle?: string;
-numero_calle: number;
-latitud: number;
-longitud: number;
-junta_vecinal: number; // ID de junta vecinal
-situacion?: number; // ID opcional
-// usuario se obtiene del token de autenticación
+  titulo: string;
+  descripcion: string;
+  categoria: number; // ForeignKey ID
+  departamento: number; // ForeignKey ID
+  nombre_calle?: string;
+  numero_calle: number;
+  latitud: number;
+  longitud: number;
+  usuario: number; // Se obtendrá del usuario autenticado
+  junta_vecinal: number; // ForeignKey ID
+  situacion?: number; // Opcional
 }
 
-// Estados de carga optimizados
+// Estados de carga
 export interface LoadingState {
-loading: boolean;
-error: string | null;
-success: boolean;
-data?: any;
+  loading: boolean;
+  error: string | null;
+  success: boolean;
 }
 
 // Tipos para validaciones
 export interface ValidationError {
-field: keyof DenunciaFormData;
-message: string;
+  field: keyof DenunciaFormData;
+  message: string;
 }
 
 export interface FormValidation {
-isValid: boolean;
-errors: ValidationError[];
-}
-
-// Respuesta de creación exitosa
-export interface CreatePublicacionResponse {
-id: number;
-codigo: string;
-titulo: string;
-descripcion: string;
-fecha_creacion: string;
-categoria: Categoria;
-departamento: Departamento;
-}
-
-// Tipos para cache y optimización
-export interface CacheData<T> {
-data: T;
-timestamp: number;
-expiry: number; // TTL en ms
-}
-
-export interface RequestConfig {
-timeout?: number;
-retries?: number;
-cache?: boolean;
-cacheTTL?: number;
+  isValid: boolean;
+  errors: ValidationError[];
 }
