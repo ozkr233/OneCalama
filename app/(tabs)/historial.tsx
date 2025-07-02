@@ -1,327 +1,492 @@
-// app/(tabs)/historial.tsx
+// app/(tabs)/historial.tsx - CREADO DESDE CERO CON GLASSMORPHISM
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Alert, FlatList } from 'react-native';
-import { Text, YStack, XStack, Card, H4, Button } from 'tamagui';
+import { SafeAreaView, Alert, FlatList, RefreshControl } from 'react-native';
+import { Text, YStack, XStack, H4, H5 } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import AppHeader from '../../src/components/layout/AppHeader';
+import GlassCard, { GlassStatsCard } from '../../src/components/ui/GlassCard';
+import LoadingSpinner from '../../src/components/ui/Loading';
 import { HistorialDenuncia, EstadisticasHistorial } from '../../src/types/historial';
 import { formatearFecha, getEstadoColor, getEstadoTexto } from '../../src/utils/formatters';
-
-// Datos placeholder siguiendo la estructura del proyecto
-const denunciasPlaceholder: HistorialDenuncia[] = [
-  {
-    id: '1',
-    numeroFolio: 'CAL-2024-001',
-    titulo: 'Luminaria dañada en Av. Brasil',
-    descripcion: 'La luminaria ubicada en Av. Brasil esquina con Calle Ramírez está intermitente desde hace una semana.',
-    estado: 'en_proceso',
-    fechaCreacion: '2024-12-15T10:30:00Z',
-    ubicacion: {
-      direccion: 'Av. Brasil esquina con Calle Ramírez, Calama'
-    },
-    evidenciasIniciales: [
-      {
-        id: 'ev1',
-        tipo: 'imagen',
-        url: 'https://via.placeholder.com/400x300/E67E22/FFFFFF?text=Luminaria+Dañada',
-        nombre: 'luminaria_dañada.jpg',
-        fechaSubida: '2024-12-15T10:30:00Z',
-        descripcion: 'Foto de la luminaria intermitente'
-      }
-    ],
-    respuestas: [
-      {
-        id: 'resp1',
-        contenido: 'Hemos recibido su reporte y ya se asignó a nuestro equipo técnico. Estimamos tener una solución en 3-5 días hábiles.',
-        fechaRespuesta: '2024-12-16T09:00:00Z',
-        autorRespuesta: 'María González',
-        cargoAutor: 'Coordinadora de Alumbrado Público',
-        evidencias: [],
-        esRespuestaOficial: true,
-        leida: true
-      },
-      {
-        id: 'resp2',
-        contenido: 'El equipo técnico visitó el lugar y confirmó el problema. Ya se solicitó el reemplazo de la luminaria.',
-        fechaRespuesta: '2024-12-20T14:00:00Z',
-        autorRespuesta: 'Carlos Pérez',
-        cargoAutor: 'Técnico en Electricidad',
-        evidencias: [],
-        esRespuestaOficial: true,
-        leida: false // Nueva respuesta no leída
-      }
-    ]
-  },
-  {
-    id: '2',
-    numeroFolio: 'CAL-2024-002',
-    titulo: 'Bache en Calle Granaderos',
-    descripcion: 'Existe un bache de gran tamaño en Calle Granaderos que puede causar daños a los vehículos.',
-    estado: 'resuelto',
-    fechaCreacion: '2024-12-10T15:45:00Z',
-    ubicacion: {
-      direccion: 'Calle Granaderos 1250, Calama'
-    },
-    evidenciasIniciales: [],
-    respuestas: [
-      {
-        id: 'resp3',
-        contenido: 'Se realizó la reparación del bache utilizando mezcla asfáltica. El trabajo quedó terminado.',
-        fechaRespuesta: '2024-12-18T16:30:00Z',
-        autorRespuesta: 'Roberto Miranda',
-        cargoAutor: 'Supervisor de Obras',
-        evidencias: [],
-        esRespuestaOficial: true,
-        leida: true
-      }
-    ]
-  },
-  {
-    id: '3',
-    numeroFolio: 'CAL-2024-003',
-    titulo: 'Ruidos molestos en horario nocturno',
-    descripcion: 'Vecinos reportan ruidos excesivos provenientes de local comercial durante la madrugada.',
-    estado: 'pendiente',
-    fechaCreacion: '2024-12-22T23:15:00Z',
-    ubicacion: {
-      direccion: 'Av. O\'Higgins 1856, Calama'
-    },
-    evidenciasIniciales: [],
-    respuestas: []
-  }
-];
-
-const estadisticasPlaceholder: EstadisticasHistorial = {
-  totalDenuncias: 3,
-  resueltas: 1,
-  pendientes: 1,
-  enProceso: 1
-};
-
-// Componente para cada denuncia
-const DenunciaCard = ({
-  denuncia,
-  onPress
-}: {
-  denuncia: HistorialDenuncia;
-  onPress: (denuncia: HistorialDenuncia) => void;
-}) => {
-  const tieneRespuestasNoLeidas = denuncia.respuestas.some(respuesta => !respuesta.leida);
-
-  return (
-    <Card
-      elevate
-      p="$4"
-      mb="$3"
-      bg="white"
-      borderWidth={tieneRespuestasNoLeidas ? 2 : 0}
-      borderColor={tieneRespuestasNoLeidas ? '#E67E22' : 'transparent'}
-      pressStyle={{ scale: 0.98 }}
-      onPress={() => onPress(denuncia)}
-      style={{
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-      }}
-    >
-      <YStack gap="$3">
-        {/* Header con folio y estado */}
-        <XStack jc="space-between" ai="center">
-          <XStack ai="center" gap="$2">
-            <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
-              #{denuncia.numeroFolio}
-            </Text>
-            {tieneRespuestasNoLeidas && (
-              <Card bg="$primary" px="$2" py="$1" br="$2">
-                <Text fontSize="$1" color="white" fontWeight="600">
-                  Nueva respuesta
-                </Text>
-              </Card>
-            )}
-          </XStack>
-          <Card
-            bg={getEstadoColor(denuncia.estado)}
-            px="$2"
-            py="$1"
-            br="$2"
-          >
-            <Text fontSize="$2" color="white" fontWeight="600">
-              {getEstadoTexto(denuncia.estado)}
-            </Text>
-          </Card>
-        </XStack>
-
-        {/* Título */}
-        <Text fontSize="$4" fontWeight="600" color="$textPrimary">
-          {denuncia.titulo}
-        </Text>
-
-        {/* Descripción */}
-        <Text fontSize="$3" color="$textSecondary" numberOfLines={2}>
-          {denuncia.descripcion}
-        </Text>
-
-        {/* Info adicional */}
-        <XStack jc="space-between" ai="center">
-          <Text fontSize="$2" color="$textSecondary">
-            {formatearFecha(denuncia.fechaCreacion)}
-          </Text>
-          <XStack ai="center" gap="$4">
-            {denuncia.evidenciasIniciales && denuncia.evidenciasIniciales.length > 0 && (
-              <XStack ai="center" gap="$1">
-                <Ionicons name="attach" size={14} color="#757575" />
-                <Text fontSize="$2" color="$textSecondary">
-                  {denuncia.evidenciasIniciales.length}
-                </Text>
-              </XStack>
-            )}
-            {denuncia.respuestas.length > 0 && (
-              <XStack ai="center" gap="$1">
-                <Ionicons name="chatbubble" size={14} color="#757575" />
-                <Text fontSize="$2" color="$textSecondary">
-                  {denuncia.respuestas.length}
-                </Text>
-              </XStack>
-            )}
-          </XStack>
-        </XStack>
-
-        {/* Ubicación */}
-        {denuncia.ubicacion && (
-          <XStack ai="center" gap="$1">
-            <Ionicons name="location" size={14} color="#757575" />
-            <Text fontSize="$2" color="$textSecondary" numberOfLines={1}>
-              {denuncia.ubicacion.direccion}
-            </Text>
-          </XStack>
-        )}
-      </YStack>
-    </Card>
-  );
-};
+import {
+  denunciasPlaceholder,
+  estadisticasPlaceholder,
+  obtenerDenunciasFiltradas
+} from '../../src/data/historialData';
 
 export default function HistorialScreen() {
   const router = useRouter();
-  const [denuncias, setDenuncias] = useState<HistorialDenuncia[]>(denunciasPlaceholder);
-  const [estadisticas, setEstadisticas] = useState<EstadisticasHistorial>(estadisticasPlaceholder);
-  const [loading, setLoading] = useState(false);
 
-  // Contar notificaciones no leídas
-  const notificacionesNoLeidas = denuncias.reduce((total, denuncia) => {
-    const respuestasNoLeidas = denuncia.respuestas.filter(respuesta => !respuesta.leida);
-    return total + respuestasNoLeidas.length;
-  }, 0);
+  // Estados principales
+  const [denuncias, setDenuncias] = useState<HistorialDenuncia[]>([]);
+  const [estadisticas, setEstadisticas] = useState<EstadisticasHistorial | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  // Función para cargar datos (simula API)
+  const cargarDatos = async (isRefresh: boolean = false) => {
+    try {
+      if (!isRefresh) setLoading(true);
+      setError(null);
+
+      // Simular carga de API
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Cargar datos placeholder
+      setDenuncias(denunciasPlaceholder);
+      setEstadisticas(estadisticasPlaceholder);
+
+      console.log('[HISTORIAL] Datos cargados exitosamente');
+    } catch (error) {
+      console.error('[HISTORIAL] Error cargando datos:', error);
+      setError('No se pudieron cargar las denuncias');
+      Alert.alert('Error', 'No se pudieron cargar las denuncias. Intenta nuevamente.');
+    } finally {
+      setLoading(false);
+      if (isRefresh) setRefreshing(false);
+    }
+  };
+
+  // Manejar refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    cargarDatos(true);
+  };
+
+  // Navegar al detalle de denuncia
   const handleVerDetalle = (denuncia: HistorialDenuncia) => {
-    // Navegar a la pantalla de detalle
+    console.log('[HISTORIAL] Navegando a detalle:', denuncia.id);
     router.push(`/denuncia/${denuncia.id}`);
   };
 
-  const renderDenuncia = ({ item }: { item: HistorialDenuncia }) => (
-    <DenunciaCard denuncia={item} onPress={handleVerDetalle} />
-  );
+  // Calcular notificaciones no leídas
+  const getNotificacionesNoLeidas = (): number => {
+    return denuncias.reduce((total, denuncia) => {
+      return total + denuncia.respuestas.filter(resp => !resp.leida).length;
+    }, 0);
+  };
 
-  const renderHeader = () => (
-    <YStack gap="$4" mb="$3">
-      {/* Estadísticas con notificaciones */}
-      <XStack gap="$3" jc="space-around">
-        <Card bg="$blue2" p="$3" br="$3" f={1} ai="center">
-          <Text fontSize="$6" fontWeight="bold" color="$blue11">
-            {estadisticas.totalDenuncias}
-          </Text>
-          <Text fontSize="$2" color="$textSecondary" textAlign="center">
-            Total
-          </Text>
-        </Card>
-        <Card bg="$green2" p="$3" br="$3" f={1} ai="center">
-          <Text fontSize="$6" fontWeight="bold" color="$green11">
-            {estadisticas.resueltas}
-          </Text>
-          <Text fontSize="$2" color="$textSecondary" textAlign="center">
-            Resueltas
-          </Text>
-        </Card>
-        <Card bg="$orange2" p="$3" br="$3" f={1} ai="center" position="relative">
-          <Text fontSize="$6" fontWeight="bold" color="$orange11">
-            {estadisticas.pendientes}
-          </Text>
-          <Text fontSize="$2" color="$textSecondary" textAlign="center">
-            Pendientes
-          </Text>
-          {notificacionesNoLeidas > 0 && (
-            <Card
-              position="absolute"
-              top={-5}
-              right={-5}
-              bg="$primary"
-              w={20}
-              h={20}
-              br="$10"
-              ai="center"
-              jc="center"
-            >
-              <Text fontSize="$1" color="white" fontWeight="bold">
-                {notificacionesNoLeidas}
+  // Renderizar estadísticas con glassmorphism
+  const renderEstadisticas = () => {
+    if (!estadisticas) return null;
+
+    return (
+      <GlassCard variant="primary" intensity="strong" style={{ marginBottom: 20, marginHorizontal: 16 }}>
+        <YStack padding="$5" space="$4">
+          {/* Header de estadísticas */}
+          <YStack alignItems="center" space="$2">
+            <H4 textAlign="center" color="white" fontWeight="800" fontSize="$6">
+              ✨ Mi Historial
+            </H4>
+            <Text fontSize="$3" color="rgba(255,255,255,0.95)" textAlign="center" fontWeight="600">
+              Seguimiento de denuncias y respuestas
+            </Text>
+          </YStack>
+
+          {/* Contenedores de estadísticas */}
+          <XStack justifyContent="space-around" paddingTop="$3">
+            {/* Total */}
+            <YStack alignItems="center" space="$2">
+              <YStack
+                backgroundColor="rgba(255,255,255,0.9)"
+                borderRadius="$5"
+                padding="$4"
+                borderWidth={2}
+                borderColor="rgba(255,255,255,1)"
+                shadowColor="rgba(255,255,255,0.5)"
+                shadowRadius={12}
+                elevation={6}
+                minWidth={70}
+                alignItems="center"
+              >
+                <Text fontSize="$8" fontWeight="900" color="#1A237E" textAlign="center">
+                  {estadisticas.totalDenuncias}
+                </Text>
+              </YStack>
+              <Text fontSize="$2" color="white" fontWeight="800">
+                Total
               </Text>
-            </Card>
-          )}
-        </Card>
-      </XStack>
+            </YStack>
 
-      {/* Búsqueda */}
-      <Button
-        bg="$primary"
-        onPress={() => Alert.alert('Búsqueda', 'Función de búsqueda próximamente')}
-        style={{
-          shadowColor: '#E67E22',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-          elevation: 4,
-        }}
+            {/* Resueltas */}
+            <YStack alignItems="center" space="$2">
+              <YStack
+                backgroundColor="rgba(34, 197, 94, 0.9)"
+                borderRadius="$5"
+                padding="$4"
+                borderWidth={2}
+                borderColor="rgba(34, 197, 94, 1)"
+                shadowColor="rgba(34, 197, 94, 0.6)"
+                shadowRadius={12}
+                elevation={6}
+                minWidth={70}
+                alignItems="center"
+              >
+                <Text fontSize="$8" fontWeight="900" color="white" textAlign="center">
+                  {estadisticas.resueltas}
+                </Text>
+              </YStack>
+              <Text fontSize="$2" color="white" fontWeight="800">
+                Resueltas
+              </Text>
+            </YStack>
+
+            {/* Pendientes */}
+            <YStack alignItems="center" space="$2">
+              <YStack
+                backgroundColor="rgba(156, 163, 175, 0.9)"
+                borderRadius="$5"
+                padding="$4"
+                borderWidth={2}
+                borderColor="rgba(156, 163, 175, 1)"
+                shadowColor="rgba(156, 163, 175, 0.6)"
+                shadowRadius={12}
+                elevation={6}
+                minWidth={70}
+                alignItems="center"
+              >
+                <Text fontSize="$8" fontWeight="900" color="white" textAlign="center">
+                  {estadisticas.pendientes}
+                </Text>
+              </YStack>
+              <Text fontSize="$2" color="white" fontWeight="800">
+                Pendientes
+              </Text>
+            </YStack>
+          </XStack>
+
+          {/* Indicador de progreso */}
+          <YStack space="$2" marginTop="$3">
+            <XStack justifyContent="space-between" alignItems="center">
+              <Text fontSize="$3" color="white" fontWeight="700">
+                Progreso de resolución
+              </Text>
+              <Text fontSize="$4" color="white" fontWeight="900">
+                {Math.round((estadisticas.resueltas / estadisticas.totalDenuncias) * 100)}%
+              </Text>
+            </XStack>
+            <YStack
+              height={8}
+              backgroundColor="rgba(255,255,255,0.3)"
+              borderRadius="$3"
+              overflow="hidden"
+            >
+              <YStack
+                height="100%"
+                backgroundColor="rgba(34, 197, 94, 1)"
+                width={`${(estadisticas.resueltas / estadisticas.totalDenuncias) * 100}%`}
+                borderRadius="$3"
+                shadowColor="rgba(34, 197, 94, 0.5)"
+                shadowRadius={4}
+              />
+            </YStack>
+          </YStack>
+        </YStack>
+      </GlassCard>
+    );
+  };
+
+  // Renderizar item de denuncia
+  const renderDenunciaItem = ({ item }: { item: HistorialDenuncia }) => {
+    const respuestasNoLeidas = item.respuestas.filter(resp => !resp.leida).length;
+    const ultimaRespuesta = item.respuestas[item.respuestas.length - 1];
+    const estadoColor = getEstadoColor(item.estado);
+
+    // Función para obtener colores dinámicos según estado
+    const getEstadoColors = (estado: string) => {
+      switch (estado) {
+        case 'resuelto':
+          return {
+            main: 'rgba(34, 197, 94, 0.8)',
+            border: 'rgba(34, 197, 94, 1)',
+            shadow: 'rgba(34, 197, 94, 0.4)'
+          };
+        case 'en_proceso':
+          return {
+            main: 'rgba(245, 158, 11, 0.8)',
+            border: 'rgba(245, 158, 11, 1)',
+            shadow: 'rgba(245, 158, 11, 0.4)'
+          };
+        case 'pendiente':
+          return {
+            main: 'rgba(107, 114, 128, 0.8)',
+            border: 'rgba(107, 114, 128, 1)',
+            shadow: 'rgba(107, 114, 128, 0.4)'
+          };
+        case 'rechazado':
+          return {
+            main: 'rgba(239, 68, 68, 0.8)',
+            border: 'rgba(239, 68, 68, 1)',
+            shadow: 'rgba(239, 68, 68, 0.4)'
+          };
+        default:
+          return {
+            main: 'rgba(59, 130, 246, 0.8)',
+            border: 'rgba(59, 130, 246, 1)',
+            shadow: 'rgba(59, 130, 246, 0.4)'
+          };
+      }
+    };
+
+    const estadoColors = getEstadoColors(item.estado);
+
+    return (
+      <GlassCard
+        variant="default"
+        intensity="medium"
+        animated
+        style={{ marginBottom: 16, marginHorizontal: 16 }}
+        onPress={() => handleVerDetalle(item)}
       >
-        <Ionicons name="search" size={18} color="white" />
-        <Text ml="$2" color="white" fontWeight="600">Buscar denuncias</Text>
-      </Button>
-    </YStack>
-  );
+        <YStack overflow="hidden" borderRadius="$4">
+          {/* Header con gradiente del estado usando LinearGradient */}
+          <LinearGradient
+            colors={[estadoColor, estadoColor + 'CC']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+            }}
+          >
+            <XStack justifyContent="space-between" alignItems="center">
+              <XStack alignItems="center" space="$3" flex={1}>
+                <Text fontSize="$4" color="white" fontWeight="800">
+                  {item.numeroFolio}
+                </Text>
+                {respuestasNoLeidas > 0 && (
+                  <YStack
+                    backgroundColor="rgba(255,255,255,0.95)"
+                    paddingHorizontal="$3"
+                    paddingVertical="$2"
+                    borderRadius="$4"
+                    borderWidth={1}
+                    borderColor="rgba(255,255,255,0.6)"
+                    shadowColor="rgba(0,0,0,0.3)"
+                    shadowRadius={6}
+                    elevation={4}
+                  >
+                    <XStack alignItems="center" space="$1">
+                      <Text fontSize="$3">🔔</Text>
+                      <Text
+                        color={estadoColor}
+                        fontSize="$2"
+                        fontWeight="800"
+                      >
+                        Nueva respuesta
+                      </Text>
+                    </XStack>
+                  </YStack>
+                )}
+              </XStack>
 
+              <YStack
+                backgroundColor="rgba(255,255,255,0.25)"
+                paddingHorizontal="$4"
+                paddingVertical="$2"
+                borderRadius="$4"
+                borderWidth={1}
+                borderColor="rgba(255,255,255,0.4)"
+                alignItems="center"
+              >
+                <Text color="white" fontSize="$3" fontWeight="800">
+                  {getEstadoTexto(item.estado)}
+                </Text>
+              </YStack>
+            </XStack>
+          </LinearGradient>
+
+          {/* Contenido principal */}
+          <YStack padding="$4" space="$4">
+            {/* Título */}
+            <H5 fontSize="$5" numberOfLines={2} color="$gray12" fontWeight="800" lineHeight="$5">
+              {item.titulo}
+            </H5>
+
+            {/* Descripción */}
+            <Text
+              fontSize="$3"
+              color="$gray11"
+              numberOfLines={3}
+              lineHeight="$5"
+              opacity={0.9}
+            >
+              {item.descripcion}
+            </Text>
+
+            {/* Metadatos con colores dinámicos según estado */}
+            <YStack space="$3">
+              {/* Fecha y respuestas con color del estado */}
+              <XStack justifyContent="space-between" alignItems="center">
+                <YStack
+                  backgroundColor={estadoColors.main}
+                  paddingHorizontal="$3"
+                  paddingVertical="$2"
+                  borderRadius="$3"
+                  borderWidth={1}
+                  borderColor={estadoColors.border}
+                  shadowColor={estadoColors.shadow}
+                  shadowRadius={4}
+                  elevation={3}
+                >
+                  <XStack alignItems="center" space="$2">
+                    <Ionicons name="calendar-outline" size={14} color="white" />
+                    <Text fontSize="$2" color="white" fontWeight="800">
+                      {formatearFecha(item.fechaCreacion)}
+                    </Text>
+                  </XStack>
+                </YStack>
+
+                {ultimaRespuesta && (
+                  <YStack
+                    backgroundColor={respuestasNoLeidas > 0 ? "rgba(220, 38, 38, 0.8)" : estadoColors.main}
+                    paddingHorizontal="$3"
+                    paddingVertical="$2"
+                    borderRadius="$3"
+                    borderWidth={1}
+                    borderColor={respuestasNoLeidas > 0 ? "rgba(220, 38, 38, 1)" : estadoColors.border}
+                    shadowColor={respuestasNoLeidas > 0 ? "rgba(220, 38, 38, 0.4)" : estadoColors.shadow}
+                    shadowRadius={4}
+                    elevation={3}
+                  >
+                    <XStack alignItems="center" space="$2">
+                      <Ionicons
+                        name={respuestasNoLeidas > 0 ? "mail" : "mail-open-outline"}
+                        size={14}
+                        color="white"
+                      />
+                      <Text
+                        fontSize="$2"
+                        color="white"
+                        fontWeight="800"
+                      >
+                        {item.respuestas.length} respuesta{item.respuestas.length !== 1 ? 's' : ''}
+                      </Text>
+                    </XStack>
+                  </YStack>
+                )}
+              </XStack>
+
+              {/* Ubicación con color del estado */}
+              {item.ubicacion && (
+                <YStack
+                  backgroundColor={estadoColors.main}
+                  padding="$3"
+                  borderRadius="$3"
+                  borderWidth={1}
+                  borderColor={estadoColors.border}
+                  shadowColor={estadoColors.shadow}
+                  shadowRadius={4}
+                  elevation={3}
+                >
+                  <XStack alignItems="center" space="$2">
+                    <Ionicons name="location-outline" size={16} color="white" />
+                    <Text fontSize="$3" color="white" numberOfLines={2} flex={1} fontWeight="700">
+                      {item.ubicacion.direccion}
+                    </Text>
+                  </XStack>
+                </YStack>
+              )}
+            </YStack>
+          </YStack>
+        </YStack>
+      </GlassCard>
+    );
+  };
+
+  // Renderizar estado vacío
   const renderEmpty = () => (
-    <YStack ai="center" jc="center" p="$6" gap="$3">
-      <Ionicons name="document-text-outline" size={60} color="#CCCCCC" />
-      <Text fontSize="$5" fontWeight="600" color="$textSecondary" textAlign="center">
-        No hay denuncias
-      </Text>
-      <Text fontSize="$3" color="$textSecondary" textAlign="center">
-        Aún no has realizado ninguna denuncia
-      </Text>
+    <YStack flex={1} justifyContent="center" alignItems="center" padding="$8">
+      <GlassCard variant="default" intensity="light">
+        <YStack padding="$6" alignItems="center" space="$4">
+          <Text fontSize="$9">📝</Text>
+          <Text fontSize="$5" color="$gray10" textAlign="center" fontWeight="600">
+            No tienes denuncias registradas
+          </Text>
+          <Text fontSize="$3" color="$gray9" textAlign="center" lineHeight="$4">
+            Cuando envíes tu primera denuncia aparecerá aquí para que puedas seguir su progreso
+          </Text>
+        </YStack>
+      </GlassCard>
     </YStack>
   );
 
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+        <AppHeader
+          screenTitle="Historial"
+          screenSubtitle="Cargando..."
+          screenIcon="time-outline"
+          showNotifications={false}
+        />
+        <YStack flex={1} justifyContent="center" alignItems="center">
+          <LoadingSpinner />
+          <Text marginTop="$4" color="$gray10" fontSize="$4">
+            Cargando historial...
+          </Text>
+        </YStack>
+      </SafeAreaView>
+    );
+  }
+
+  // Render principal
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
-      {/* Header unificado - Solo título de pantalla */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f1f5f9' }}>
       <AppHeader
-        screenTitle="Mi Historial"
-        screenSubtitle="Seguimiento de denuncias y respuestas"
-        screenIcon="time"
-        showAppInfo={false}
+        screenTitle="Historial"
+        screenSubtitle={`${denuncias.length} denuncias registradas`}
+        screenIcon="time-outline"
+        showNotifications={true}
       />
 
-      <YStack f={1} p="$4">
+      <YStack flex={1}>
+        {/* Mensaje de error */}
+        {error && (
+          <GlassCard
+            variant="danger"
+            intensity="medium"
+            style={{ marginHorizontal: 16, marginBottom: 16 }}
+          >
+            <YStack padding="$3">
+              <Text color="white" textAlign="center" fontWeight="600">
+                {error}
+              </Text>
+            </YStack>
+          </GlassCard>
+        )}
+
+        {/* Lista principal */}
         <FlatList
           data={denuncias}
-          renderItem={renderDenuncia}
+          renderItem={renderDenunciaItem}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderEstadisticas}
           ListEmptyComponent={renderEmpty}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#3B82F6']}
+              tintColor="#3B82F6"
+            />
+          }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: 20,
-            flexGrow: 1
+            flexGrow: 1,
+            paddingBottom: 24,
+            paddingTop: 8
           }}
         />
       </YStack>
