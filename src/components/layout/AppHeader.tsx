@@ -1,6 +1,7 @@
+// src/components/layout/AppHeader.tsx - ACTUALIZADO
 import React from 'react';
-import { Text, YStack, XStack, Image } from 'tamagui';
-import { StatusBar, TouchableOpacity } from 'react-native';
+import { Text, YStack, XStack, Image, Button } from 'tamagui';
+import { StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -9,9 +10,9 @@ interface AppHeaderProps {
   screenSubtitle?: string;
   screenIcon?: keyof typeof Ionicons.glyphMap;
   showNotifications?: boolean;
-  showAppInfo?: boolean; // Nueva prop para mostrar info de la app
-  showBack?: boolean; // Nueva prop para mostrar botón de regreso
-  onBack?: () => void; // Función personalizada para el regreso
+  showAppInfo?: boolean;
+  showBackButton?: boolean; // Nueva prop para mostrar botón de regreso
+  onBackPress?: () => void; // Función personalizada para el botón de regreso
 }
 
 export default function AppHeader({
@@ -20,14 +21,14 @@ export default function AppHeader({
   screenIcon,
   showNotifications = true,
   showAppInfo = false,
-  showBack = false,
-  onBack
+  showBackButton = false,
+  onBackPress
 }: AppHeaderProps) {
   const router = useRouter();
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress();
     } else {
       router.back();
     }
@@ -35,9 +36,9 @@ export default function AppHeader({
 
   return (
     <>
-      <StatusBar backgroundColor="#1A237E" barStyle="light-content" />
+      <StatusBar backgroundColor="#E67E22" barStyle="light-content" />
 
-      {/* Una sola barra */}
+      {/* Header unificado */}
       <YStack
         bg="$primary"
         px="$4"
@@ -53,24 +54,29 @@ export default function AppHeader({
         }}
       >
         <XStack jc="space-between" ai="center">
-          {/* Lado izquierdo - Condicional */}
+          {/* Lado izquierdo */}
           <XStack ai="center" gap="$3" f={1}>
-            {/* Botón de regreso - Solo se muestra cuando showBack es true */}
-            {showBack && (
-              <TouchableOpacity
-                onPress={handleBack}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  justifyContent: 'center',
-                  alignItems: 'center',
+            {/* Botón de regreso (si está habilitado) */}
+            {showBackButton && (
+              <Button
+                size="$3"
+                circular
+                bg="rgba(255,255,255,0.1)"
+                onPress={handleBackPress}
+                pressStyle={{
+                  bg: "rgba(255,255,255,0.2)",
+                  scale: 0.95
                 }}
-                activeOpacity={0.7}
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 2,
+                  elevation: 2,
+                }}
               >
                 <Ionicons name="arrow-back" size={20} color="white" />
-              </TouchableOpacity>
+              </Button>
             )}
 
             {showAppInfo ? (
@@ -109,9 +115,9 @@ export default function AppHeader({
                 </YStack>
               </>
             ) : (
-              // En otras pantallas: Solo icono + título de la pantalla
+              // En otras pantallas: Icono + título de la pantalla
               <>
-                {screenIcon && !showBack && (
+                {screenIcon && (
                   <Ionicons name={screenIcon} size={24} color="white" />
                 )}
                 <YStack>
@@ -130,20 +136,24 @@ export default function AppHeader({
 
           {/* Lado derecho - Notificaciones */}
           {showNotifications && (
-            <YStack
-              w={36}
-              h={36}
+            <Button
+              size="$3"
+              circular
               bg="rgba(255,255,255,0.1)"
-              br="$8"
-              ai="center"
-              jc="center"
               pressStyle={{
                 bg: "rgba(255,255,255,0.2)",
                 scale: 0.95
               }}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.2,
+                shadowRadius: 2,
+                elevation: 2,
+              }}
             >
               <Ionicons name="notifications-outline" size={20} color="white" />
-            </YStack>
+            </Button>
           )}
         </XStack>
       </YStack>

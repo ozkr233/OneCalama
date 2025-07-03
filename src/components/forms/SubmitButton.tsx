@@ -102,9 +102,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
     >
       {loading ? (
         <>
-          <YStack animation="spin" rotate="360deg">
-            <Ionicons name={buttonState.icon as any} size={20} color="white" />
-          </YStack>
+          <Ionicons name="refresh" size={20} color="white" />
           <Text color="white" ml="$2" fontWeight="bold" fontSize="$5">
             {buttonState.text}
           </Text>

@@ -1,9 +1,10 @@
 // src/components/ai/AIAssistant.tsx
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
-import { Modal, ScrollView, Alert } from 'react-native';
+import { Modal, ScrollView, Alert, SafeAreaView } from 'react-native';
 import { Text, YStack, XStack, Button, Card, H4, Spinner } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
 import { DenunciaFormData } from '../../types';
+import AppHeader from '../layout/AppHeader';
 
 // Tipos para el componente
 interface AIAssistantProps {
@@ -219,37 +220,21 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>((props, ref) =>
       animationType="slide"
       presentationStyle="pageSheet"
     >
-      <YStack f={1} bg="$background">
-        {/* Header del modal */}
-        <YStack
-          bg="linear-gradient(45deg, #667eea, #764ba2)"
-          p="$4"
-          pt="$6"
-        >
-          <XStack jc="space-between" ai="center">
-            <XStack ai="center" gap="$3">
-              <Ionicons name="sparkles" size={24} color="white" />
-              <H4 color="white" fontWeight="bold">
-                Asistente IA
-              </H4>
-            </XStack>
-            <Button
-              size="$3"
-              circular
-              bg="rgba(255,255,255,0.2)"
-              onPress={() => setModalVisible(false)}
-            >
-              <Ionicons name="close" size={18} color="white" />
-            </Button>
-          </XStack>
-          <Text color="rgba(255,255,255,0.9)" mt="$2" fontSize="$3">
-            Sugerencias inteligentes para tu denuncia
-          </Text>
-        </YStack>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
+        {/* Usar AppHeader consistente con botón de regreso */}
+        <AppHeader
+          screenTitle="Asistente IA"
+          screenSubtitle="Sugerencias inteligentes para tu denuncia"
+          screenIcon="sparkles"
+          showAppInfo={false}
+          showNotifications={false}
+          showBackButton={true}
+          onBackPress={() => setModalVisible(false)}
+        />
 
         {/* Contenido del modal */}
         <ScrollView style={{ flex: 1 }}>
-          <YStack p="$4" gap="$4">
+          <YStack p="$4" gap="$4">{/* resto del contenido */}
 
             {/* Estado de carga */}
             {loading && (
@@ -358,7 +343,7 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>((props, ref) =>
             )}
           </YStack>
         </ScrollView>
-      </YStack>
+      </SafeAreaView>
     </Modal>
   );
 });
