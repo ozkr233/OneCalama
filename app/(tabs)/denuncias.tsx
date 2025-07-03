@@ -1,13 +1,25 @@
-// app/(tabs)/denuncias.tsx - ACTUALIZADO CON EVIDENCIAS
+// app/(tabs)/denuncias.tsx
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Alert } from 'react-native';
 import DenunciaForm from '../../src/components/forms/DenunciaForm';
-import { DenunciaFormData } from '../../src/types/denuncias';
+import { DenunciaFormData } from '../../src/types';
 import AppHeader from '../../src/components/layout/AppHeader';
 import { DenunciasService } from '../../src/services';
 
+// 🔧 Tipo para normalizar los datos
+interface NormalizedOption {
+  id: string;
+  nombre: string;
+}
+
+interface NormalizedCategory extends NormalizedOption {
+  departamento?: {
+    id: number;
+    nombre: string;
+  };
+}
+
 export default function DenunciasScreen() {
-  // ACTUALIZADO: Estado inicial con evidencias
   const [formData, setFormData] = useState<DenunciaFormData>({
     titulo: '',
     descripcion: '',
@@ -15,12 +27,11 @@ export default function DenunciasScreen() {
     departamento: '',
     direccion: '',
     ubicacion: undefined,
-    evidencias: [], // ← NUEVO: Array de evidencias vacío
   });
 
   const [loading, setLoading] = useState(false);
-  const [departamentos, setDepartamentos] = useState<any[]>([]);
-  const [categorias, setCategorias] = useState<any[]>([]);
+  const [departamentos, setDepartamentos] = useState<NormalizedOption[]>([]);
+  const [categorias, setCategorias] = useState<NormalizedCategory[]>([]);
 
   useEffect(() => {
     loadInitialData();
@@ -34,17 +45,75 @@ export default function DenunciasScreen() {
         DenunciasService.getCategorias(),
       ]);
 
-      setDepartamentos(deptData);
-      setCategorias(catData);
+      // 🔧 FIX: Normalizar los datos para que siempre tengan id como string
+      const departamentosNormalizados: NormalizedOption[] = deptData.map(dept => ({
+        id: String(dept.id), // Convertir a string
+        nombre: dept.nombre
+      }));
 
-      console.log('✅ Datos cargados:', {
-        departamentos: deptData.length,
-        categorias: catData.length
+      // 🔧 FIX: Mantener categorías con información del departamento COMPLETA
+      const categoriasNormalizadas = catData.map(cat => ({
+        id: String(cat.id), // Convertir a string
+        nombre: cat.nombre,
+        departamento: cat.departamento // Mantener la relación COMPLETA con el departamento
+      }));
+
+      setDepartamentos(departamentosNormalizados);
+      setCategorias(categoriasNormalizadas);
+
+      console.log('✅ Datos cargados y normalizados:', {
+        departamentos: departamentosNormalizados.length,
+        categorias: categoriasNormalizadas.length
       });
+
+      // 🔧 Debug: Verificar estructura completa
+      console.log('📊 Estructura departamentos:', departamentosNormalizados);
+      console.log('📊 Estructura categorías con departamentos:', categoriasNormalizadas.map(cat => ({
+        id: cat.id,
+        nombre: cat.nombre,
+        departamento: cat.departamento
+      })));
 
     } catch (error) {
       console.error('❌ Error cargando datos iniciales:', error);
       Alert.alert('Error', 'No se pudieron cargar los datos necesarios. Se usarán datos por defecto.');
+
+      // 🔧 Datos de fallback normalizados con departamentos COMPLETOS
+      setDepartamentos([
+        { id: '1', nombre: 'Obras Públicas' },
+        { id: '2', nombre: 'Medio Ambiente' },
+        { id: '3', nombre: 'Servicios Municipales' },
+      ]);
+
+      setCategorias([
+        {
+          id: '1',
+          nombre: 'Seguridad',
+          departamento: { id: 3, nombre: 'Servicios Municipales' }
+        },
+        {
+          id: '2',
+          nombre: 'Basura',
+          departamento: { id: 2, nombre: 'Medio Ambiente' }
+        },
+        {
+          id: '3',
+          nombre: 'Áreas verdes',
+          departamento: { id: 2, nombre: 'Medio Ambiente' }
+        },
+        {
+          id: '4',
+          nombre: 'Mantención de Calles',
+          departamento: { id: 1, nombre: 'Obras Públicas' }
+        },
+        {
+          id: '5',
+          nombre: 'Alumbrado Público',
+          departamento: { id: 1, nombre: 'Obras Públicas' }
+        },
+      ]);
+
+      console.log('🔧 Usando datos de fallback con departamentos');
     }
   };
 
@@ -52,7 +121,6 @@ export default function DenunciasScreen() {
     setLoading(true);
     try {
       console.log('📤 Enviando publicación:', formData);
-      console.log('📷 Evidencias a enviar:', formData.evidencias.length);
 
       const nuevaPublicacion = await DenunciasService.crearPublicacion(formData);
 
@@ -60,13 +128,11 @@ export default function DenunciasScreen() {
 
       Alert.alert(
         '✅ Denuncia Enviada',
-        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. ${formData.evidencias.length > 0 ?
-          `Se subieron ${formData.evidencias.length} evidencia(s).` : ''} Te notificaremos sobre su progreso.`,
+        `Tu denuncia ha sido registrada con el código: ${nuevaPublicacion.codigo}. Te notificaremos sobre su progreso.`,
         [
           {
             text: 'OK',
             onPress: () => {
-              // ACTUALIZADO: Reset completo del formulario incluyendo evidencias
               setFormData({
                 titulo: '',
                 descripcion: '',
@@ -74,7 +140,6 @@ export default function DenunciasScreen() {
                 departamento: '',
                 direccion: '',
                 ubicacion: undefined,
-                evidencias: [], // ← IMPORTANTE: Limpiar evidencias
               });
             }
           }
@@ -92,24 +157,21 @@ export default function DenunciasScreen() {
     }
   };
 
-  // ELIMINADO: handleTomarFoto (ya no se necesita, lo maneja EvidenceSection)
-  // ELIMINADO: handleUsarUbicacion (lo maneja UbicacionSection)
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
       <AppHeader
         screenTitle="Nueva Denuncia"
         screenSubtitle="Reporta problemas en tu comunidad"
-        screenIcon="document-text"
-        showAppInfo={false}
+        screenIcon="megaphone"
       />
+
       <DenunciaForm
         formData={formData}
         onFormDataChange={setFormData}
         onSubmit={handleSubmit}
         loading={loading}
-        categorias={categorias}
-        departamentos={departamentos}
+        departamentos={departamentos} // Datos normalizados
+        categorias={categorias}       // Datos normalizados
       />
     </SafeAreaView>
   );

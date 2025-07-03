@@ -93,32 +93,38 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>((props, ref) =>
       Object.entries(KEYWORDS_DB).forEach(([keyword, data]) => {
         if (fullText.includes(keyword)) {
 
-          // Buscar categoría correspondiente
-          const matchedCategory = categorias.find(cat =>
-            cat.nombre.toLowerCase().includes(data.categoria.toLowerCase())
-          );
+          // 🔧 FIX: Buscar categoría correspondiente - manejar tanto OptionItem como Categoria
+          const matchedCategory = categorias.find(cat => {
+            const categoryName = cat.nombre || cat.name || '';
+            return categoryName.toLowerCase().includes(data.categoria.toLowerCase());
+          });
 
-          // Buscar departamento correspondiente
-          const matchedDepartment = departamentos.find(dept =>
-            dept.nombre.toLowerCase().includes(data.departamento.toLowerCase())
-          );
+          // 🔧 FIX: Buscar departamento correspondiente - manejar tanto OptionItem como DepartamentoMunicipal
+          const matchedDepartment = departamentos.find(dept => {
+            const departmentName = dept.nombre || dept.name || '';
+            return departmentName.toLowerCase().includes(data.departamento.toLowerCase());
+          });
+
+          // 🔧 FIX: Convertir IDs a string para compatibilidad
+          const categoryId = matchedCategory ? String(matchedCategory.id) : null;
+          const departmentId = matchedDepartment ? String(matchedDepartment.id) : null;
 
           // Agregar sugerencia de categoría
-          if (matchedCategory && formData.categoria !== matchedCategory.id) {
+          if (matchedCategory && formData.categoria !== categoryId) {
             foundSuggestions.push({
               field: 'categoria',
-              value: matchedCategory.id,
-              label: matchedCategory.nombre,
+              value: categoryId,
+              label: matchedCategory.nombre || matchedCategory.name,
               reason: `Detecté que tu problema está relacionado con ${data.categoria.toLowerCase()}`
             });
           }
 
           // Agregar sugerencia de departamento
-          if (matchedDepartment && formData.departamento !== matchedDepartment.id) {
+          if (matchedDepartment && formData.departamento !== departmentId) {
             foundSuggestions.push({
               field: 'departamento',
-              value: matchedDepartment.id,
-              label: matchedDepartment.nombre,
+              value: departmentId,
+              label: matchedDepartment.nombre || matchedDepartment.name,
               reason: `Este tipo de problema generalmente lo maneja ${data.departamento}`
             });
           }
@@ -234,7 +240,7 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>((props, ref) =>
 
         {/* Contenido del modal */}
         <ScrollView style={{ flex: 1 }}>
-          <YStack p="$4" gap="$4">{/* resto del contenido */}
+          <YStack p="$4" gap="$4">
 
             {/* Estado de carga */}
             {loading && (

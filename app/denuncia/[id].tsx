@@ -1,11 +1,13 @@
-// app/denuncia/[id].tsx - PANTALLA DE DETALLE CON COMPONENTE DE ENCUESTA
+// app/denuncia/[id].tsx - ACTUALIZADO CON EVIDENCIAS EN RESPUESTAS
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Alert, FlatList, ScrollView } from 'react-native';
-import { Text, YStack, XStack, Card, H4, H5, Separator, Image } from 'tamagui';
+import { Text, YStack, XStack, Card, H4, H5, Separator } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AppHeader from '../../src/components/layout/AppHeader';
 import SatisfactionSurvey from '../../src/components/ui/SatisfactionSurvey';
+import { RespuestaItem } from '../../src/components/historial/RespuestaItem';
+import { EvidenciaViewerModal } from '../../src/components/historial/EvidenciaViewerModal';
 import { HistorialDenuncia, Respuesta, Evidencia } from '../../src/types/historial';
 import { formatearFecha, formatearFechaCompleta, getEstadoColor, getEstadoTexto } from '../../src/utils/formatters';
 import { obtenerDenunciaPorId, marcarRespuestasLeidas } from '../../src/data/historialData';
@@ -14,8 +16,14 @@ import LoadingSpinner from '../../src/components/ui/Loading';
 export default function DenunciaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+
+  // Estados principales
   const [denuncia, setDenuncia] = useState<HistorialDenuncia | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Estados para evidencias
+  const [evidenciaVisible, setEvidenciaVisible] = useState(false);
+  const [evidenciaSeleccionada, setEvidenciaSeleccionada] = useState<Evidencia | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -51,129 +59,64 @@ export default function DenunciaDetailScreen() {
   const handleSatisfactionRating = async (rating: number) => {
     try {
       // Actualizar estado local inmediatamente para feedback visual
-      setDenuncia(prev => prev ? { ...prev, satisfaccion: rating } : null);
+      setDenuncia(prev => prev ? { ...prev, satisfaccionCiudadano: rating } : null);
 
       console.log(`[API] Enviando calificación: ${rating} para denuncia ${id}`);
 
       // TODO: Aquí iría la llamada a la API
-      // await DenunciasService.calificarDenuncia(id, rating);
+      // await HistorialService.calificarSatisfaccion(id, rating);
 
+      Alert.alert('¡Gracias!', 'Tu calificación ha sido registrada.');
     } catch (error) {
       console.error('[API] Error enviando calificación:', error);
       // Revertir cambio local si hay error
-      setDenuncia(prev => prev ? { ...prev, satisfaccion: undefined } : null);
+      setDenuncia(prev => prev ? { ...prev, satisfaccionCiudadano: undefined } : null);
       Alert.alert('Error', 'No se pudo enviar la calificación. Intenta nuevamente.');
     }
   };
 
-  // Función para manejar comentarios
-  const handleCommentPress = () => {
-    Alert.alert(
-      'Agregar comentario',
-      'Esta funcionalidad se implementará próximamente',
-      [{ text: 'OK' }]
-    );
+  // Manejar visualización de evidencias
+  const handleVerEvidencia = (evidencia: Evidencia) => {
+    setEvidenciaSeleccionada(evidencia);
+    setEvidenciaVisible(true);
   };
 
-  const renderEvidencia = (evidencia: Evidencia) => (
-    <Card key={evidencia.id} padding="$3" marginRight="$3" width={120}>
-      <YStack space="$2">
-        {evidencia.tipo === 'imagen' && (
-          <Image
-            source={{ uri: evidencia.url }}
-            width="100%"
-            height={80}
-            borderRadius="$3"
-            backgroundColor="$gray3"
-          />
-        )}
-        <Text fontSize="$1" color="$gray10" numberOfLines={2}>
-          {evidencia.descripcion || evidencia.nombre}
-        </Text>
-      </YStack>
-    </Card>
-  );
+  // Manejar marcar respuesta como leída
+  const handleMarcarRespuestaLeida = async (respuestaId: string) => {
+    try {
+      // Actualizar estado local
+      setDenuncia(prev => {
+        if (!prev) return null;
 
-  const renderRespuesta = ({ item }: { item: Respuesta }) => (
-    <Card
-      marginBottom="$3"
-      padding="$4"
-      backgroundColor={item.esRespuestaOficial ? "$blue1" : "$gray1"}
-      borderLeftWidth={4}
-      borderLeftColor={item.esRespuestaOficial ? "$blue8" : "$gray6"}
-    >
-      <YStack space="$3">
-        {/* Header de la respuesta */}
-        <XStack justifyContent="space-between" alignItems="flex-start">
-          <YStack flex={1} marginRight="$3">
-            <XStack alignItems="center" space="$2">
-              <Ionicons
-                name={item.esRespuestaOficial ? "shield-checkmark" : "person"}
-                size={16}
-                color={item.esRespuestaOficial ? "#3B82F6" : "#6B7280"}
-              />
-              <Text fontSize="$3" fontWeight="600" color="$gray12">
-                {item.autorRespuesta}
-              </Text>
-              {!item.leida && (
-                <YStack
-                  width={8}
-                  height={8}
-                  borderRadius={4}
-                  backgroundColor="$red8"
-                />
-              )}
-            </XStack>
-            <Text fontSize="$2" color="$gray10">
-              {item.cargoAutor}
-            </Text>
-            {item.departamento && (
-              <Text fontSize="$2" color="$gray9">
-                {item.departamento}
-              </Text>
-            )}
-          </YStack>
+        const respuestasActualizadas = prev.respuestas.map(resp =>
+          resp.id === respuestaId ? { ...resp, leida: true } : resp
+        );
 
-          <Text fontSize="$2" color="$gray9">
-            {formatearFechaCompleta(item.fechaRespuesta)}
-          </Text>
-        </XStack>
+        return { ...prev, respuestas: respuestasActualizadas };
+      });
 
-        {/* Contenido de la respuesta */}
-        <Text fontSize="$3" color="$gray12" lineHeight="$4">
-          {item.contenido}
-        </Text>
+      // TODO: Llamada a la API
+      // await HistorialService.marcarRespuestaComoLeida(respuestaId);
 
-        {/* Evidencias de la respuesta */}
-        {item.evidencias && item.evidencias.length > 0 && (
-          <YStack space="$2">
-            <Text fontSize="$3" fontWeight="600" color="$gray11">
-              Evidencias adjuntas:
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <XStack>
-                {item.evidencias.map(renderEvidencia)}
-              </XStack>
-            </ScrollView>
-          </YStack>
-        )}
-      </YStack>
-    </Card>
-  );
+    } catch (error) {
+      console.error('Error marcando respuesta como leída:', error);
+    }
+  };
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-      <AppHeader
-        screenTitle="Detalle"
-        screenSubtitle="Cargando..."
-        showBack={true}
-        showNotifications={false}
-      />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
+        <AppHeader
+          screenTitle="Cargando..."
+          screenSubtitle=""
+          screenIcon="document-text"
+          showBackButton={true}
+          onBackPress={() => router.back()}
+        />
         <YStack flex={1} justifyContent="center" alignItems="center">
           <LoadingSpinner />
-          <Text marginTop="$3" color="$gray10">
-            Cargando detalle...
+          <Text mt="$4" color="$textSecondary">
+            Cargando detalles de la denuncia...
           </Text>
         </YStack>
       </SafeAreaView>
@@ -182,179 +125,190 @@ export default function DenunciaDetailScreen() {
 
   if (!denuncia) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
         <AppHeader
           screenTitle="Error"
-          screenSubtitle="Denuncia no encontrada"
-          showBack={true}
-          showNotifications={false}
+          screenSubtitle=""
+          screenIcon="alert-circle"
+          showBackButton={true}
+          onBackPress={() => router.back()}
         />
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$6">
-          <Ionicons name="document-text-outline" size={64} color="#9CA3AF" />
-          <Text fontSize="$4" color="$gray10" textAlign="center" marginTop="$3">
-            No se encontró la denuncia
+        <YStack flex={1} justifyContent="center" alignItems="center" p="$4">
+          <Ionicons name="document-text" size={64} color="#ccc" />
+          <Text fontSize="$5" fontWeight="bold" color="$textPrimary" mt="$4">
+            Denuncia no encontrada
+          </Text>
+          <Text fontSize="$3" color="$textSecondary" textAlign="center" mt="$2">
+            No se pudo cargar la información de esta denuncia
           </Text>
         </YStack>
       </SafeAreaView>
     );
   }
 
+  const respuestasNoLeidas = denuncia.respuestas.filter(r => !r.leida).length;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
       <AppHeader
-        screenTitle={denuncia.numeroFolio}
+        screenTitle={`${denuncia.numeroFolio}`}
         screenSubtitle={getEstadoTexto(denuncia.estado)}
-        showBack={true}
-        showNotifications={false}
+        screenIcon="document-text"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+        showNotifications={respuestasNoLeidas > 0}
+        notificationCount={respuestasNoLeidas}
       />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-        {/* Información principal */}
-        <Card marginBottom="$4" padding="$4" backgroundColor="white">
-          <YStack space="$3">
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <YStack gap="$4" p="$4">
+
+          {/* Información principal */}
+          <Card elevate p="$4" gap="$3">
             <XStack justifyContent="space-between" alignItems="flex-start">
-              <H4 flex={1} marginRight="$3">{denuncia.titulo}</H4>
-              <YStack
-                backgroundColor={getEstadoColor(denuncia.estado)}
-                paddingHorizontal="$3"
-                paddingVertical="$1"
-                borderRadius="$3"
-              >
-                <Text color="white" fontSize="$2" fontWeight="600">
-                  {getEstadoTexto(denuncia.estado)}
+              <YStack flex={1} gap="$2">
+                <H4 color="$textPrimary">{denuncia.titulo}</H4>
+                <Text fontSize="$3" color="$textSecondary" lineHeight="$4">
+                  {denuncia.descripcion}
                 </Text>
               </YStack>
+              <Card
+                bg={getEstadoColor(denuncia.estado)}
+                px="$3"
+                py="$1"
+                br="$3"
+                ml="$3"
+              >
+                <Text color="white" fontSize="$2" fontWeight="bold">
+                  {getEstadoTexto(denuncia.estado).toUpperCase()}
+                </Text>
+              </Card>
             </XStack>
-
-            <Text fontSize="$3" color="$gray11" lineHeight="$4">
-              {denuncia.descripcion}
-            </Text>
 
             <Separator />
 
             {/* Metadatos */}
-            <YStack space="$2">
-              <XStack justifyContent="space-between">
-                <Text fontSize="$2" color="$gray12">{formatearFechaCompleta(denuncia.fechaCreacion)}</Text>
+            <YStack gap="$2">
+              <XStack alignItems="center" gap="$2">
+                <Ionicons name="calendar" size={16} color="#667eea" />
+                <Text fontSize="$3" color="$textSecondary">
+                  Creada: {formatearFecha(denuncia.fechaCreacion)}
+                </Text>
               </XStack>
 
-              {denuncia.fechaActualizacion && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Actualizada:</Text>
-                  <Text fontSize="$2" color="$gray12">{formatearFechaCompleta(denuncia.fechaActualizacion)}</Text>
-                </XStack>
-              )}
-
               {denuncia.categoria && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Categoría:</Text>
-                  <Text fontSize="$2" color="$gray12">{denuncia.categoria}</Text>
+                <XStack alignItems="center" gap="$2">
+                  <Ionicons name="pricetag" size={16} color="#667eea" />
+                  <Text fontSize="$3" color="$textSecondary">
+                    Categoría: {denuncia.categoria}
+                  </Text>
                 </XStack>
               )}
 
               {denuncia.ubicacion && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Ubicación:</Text>
-                  <Text fontSize="$2" color="$gray12" flex={1} textAlign="right">
+                <XStack alignItems="center" gap="$2">
+                  <Ionicons name="location" size={16} color="#667eea" />
+                  <Text fontSize="$3" color="$textSecondary">
                     {denuncia.ubicacion.direccion}
                   </Text>
                 </XStack>
               )}
 
               {denuncia.departamentoAsignado && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Departamento:</Text>
-                  <Text fontSize="$2" color="$gray12">{denuncia.departamentoAsignado}</Text>
-                </XStack>
-              )}
-
-              {denuncia.funcionarioAsignado && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Asignado a:</Text>
-                  <Text fontSize="$2" color="$gray12">{denuncia.funcionarioAsignado}</Text>
-                </XStack>
-              )}
-
-              {denuncia.tiempoRespuesta !== undefined && (
-                <XStack justifyContent="space-between">
-                  <Text fontSize="$2" color="$gray10">Tiempo de respuesta:</Text>
-                  <Text fontSize="$2" color="$gray12">
-                    {denuncia.tiempoRespuesta < 1
-                      ? `${Math.round(denuncia.tiempoRespuesta * 24)} horas`
-                      : `${Math.round(denuncia.tiempoRespuesta)} días`
-                    }
+                <XStack alignItems="center" gap="$2">
+                  <Ionicons name="business" size={16} color="#667eea" />
+                  <Text fontSize="$3" color="$textSecondary">
+                    {denuncia.departamentoAsignado}
                   </Text>
                 </XStack>
               )}
             </YStack>
-          </YStack>
-        </Card>
-
-        {/* Evidencias iniciales */}
-        {denuncia.evidenciasIniciales && denuncia.evidenciasIniciales.length > 0 && (
-          <Card marginBottom="$4" padding="$4" backgroundColor="white">
-            <YStack space="$3">
-              <H5>Evidencias Iniciales</H5>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <XStack>
-                  {denuncia.evidenciasIniciales.map(renderEvidencia)}
-                </XStack>
-              </ScrollView>
-            </YStack>
           </Card>
-        )}
 
-        {/* Respuestas */}
-        <YStack space="$3">
-          <H5>
-            Respuestas ({denuncia.respuestas.length})
-            {denuncia.respuestas.filter(r => !r.leida).length > 0 && (
-              <Text color="$red10"> • {denuncia.respuestas.filter(r => !r.leida).length} nuevas</Text>
-            )}
-          </H5>
-
-          {denuncia.respuestas.length > 0 ? (
-            <FlatList
-              data={denuncia.respuestas.sort((a, b) =>
-                new Date(a.fechaRespuesta).getTime() - new Date(b.fechaRespuesta).getTime()
-              )}
-              renderItem={renderRespuesta}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Card padding="$4" backgroundColor="$gray2">
-              <YStack alignItems="center" space="$2">
-                <Ionicons name="chatbubbles-outline" size={32} color="#9CA3AF" />
-                <Text fontSize="$3" color="$gray10" textAlign="center">
-                  Aún no hay respuestas para esta denuncia
-                </Text>
-                <Text fontSize="$2" color="$gray9" textAlign="center">
-                  Te notificaremos cuando recibas una respuesta oficial
-                </Text>
+          {/* Evidencias iniciales */}
+          {denuncia.evidenciasIniciales && denuncia.evidenciasIniciales.length > 0 && (
+            <Card elevate p="$4" gap="$3">
+              <H5 color="$textPrimary">📎 Evidencias iniciales</H5>
+              <YStack gap="$2">
+                {denuncia.evidenciasIniciales.map((evidencia) => (
+                  <XStack
+                    key={evidencia.id}
+                    alignItems="center"
+                    gap="$3"
+                    p="$2"
+                    bg="$gray1"
+                    br="$3"
+                    pressStyle={{ bg: "$gray2" }}
+                    onPress={() => handleVerEvidencia(evidencia)}
+                  >
+                    <Ionicons name="image" size={20} color="#667eea" />
+                    <Text flex={1} fontSize="$3" color="$textPrimary">
+                      {evidencia.nombre}
+                    </Text>
+                    <Ionicons name="eye" size={16} color="#999" />
+                  </XStack>
+                ))}
               </YStack>
             </Card>
           )}
-        </YStack>
 
-        {/* Encuesta de satisfacción - Para denuncias resueltas o cerradas */}
-        {(denuncia.estado === 'resuelto' || denuncia.estado === 'cerrado' || denuncia.estado === 'en_proceso') && (
-          <YStack marginTop="$4" marginBottom="$4">
+          {/* Respuestas */}
+          <Card elevate p="$4" gap="$3">
+            <XStack justifyContent="space-between" alignItems="center">
+              <H5 color="$textPrimary">💬 Respuestas ({denuncia.respuestas.length})</H5>
+              {respuestasNoLeidas > 0 && (
+                <Card bg="$red10" px="$2" py="$1" br="$2">
+                  <Text color="white" fontSize="$1" fontWeight="bold">
+                    {respuestasNoLeidas} NUEVA{respuestasNoLeidas > 1 ? 'S' : ''}
+                  </Text>
+                </Card>
+              )}
+            </XStack>
+
+            {denuncia.respuestas.length === 0 ? (
+              <YStack alignItems="center" py="$6" gap="$2">
+                <Ionicons name="chatbubble-outline" size={48} color="#ccc" />
+                <Text fontSize="$4" color="$textSecondary" textAlign="center">
+                  Aún no hay respuestas
+                </Text>
+                <Text fontSize="$3" color="$textSecondary" textAlign="center">
+                  Te notificaremos cuando recibas una respuesta oficial
+                </Text>
+              </YStack>
+            ) : (
+              <YStack gap="$3">
+                {denuncia.respuestas.map((respuesta) => (
+                  <RespuestaItem
+                    key={respuesta.id}
+                    respuesta={respuesta}
+                    onMarcarComoLeida={handleMarcarRespuestaLeida}
+                    onVerEvidencia={handleVerEvidencia}
+                  />
+                ))}
+              </YStack>
+            )}
+          </Card>
+
+          {/* Encuesta de satisfacción */}
+          {denuncia.estado === 'resuelto' && (
             <SatisfactionSurvey
-              currentRating={denuncia.satisfaccion}
+              denunciaId={denuncia.id}
+              currentRating={denuncia.satisfaccionCiudadano}
               onRatingChange={handleSatisfactionRating}
-              title={`¿Cómo calificas ${denuncia.estado === 'resuelto' ? 'la resolución' : 'el servicio hasta ahora'}?`}
-              subtitle="Tu opinión nos ayuda a mejorar el servicio"
-              showCommentField={true}
-              existingComment={denuncia.comentariosSatisfaccion}
-              onCommentPress={handleCommentPress}
             />
-          </YStack>
-        )}
-
-        {/* Espacio adicional al final */}
-        <YStack height="$4" />
+          )}
+        </YStack>
       </ScrollView>
+
+      {/* Modal de visualización de evidencias */}
+      <EvidenciaViewerModal
+        visible={evidenciaVisible}
+        evidencia={evidenciaSeleccionada}
+        onClose={() => {
+          setEvidenciaVisible(false);
+          setEvidenciaSeleccionada(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

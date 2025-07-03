@@ -1,5 +1,5 @@
 // src/components/forms/DenunciaForm.tsx - REFACTORIZADO CON EVIDENCIAS
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, ScrollView } from 'react-native';
 import { Text, YStack, XStack, Button, Card, H4 } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +36,60 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
 }) => {
   // Estados locales
   const [isMapVisible, setIsMapVisible] = useState(false);
+
+  // 🔧 NUEVO: Efecto para actualizar departamento automáticamente
+  useEffect(() => {
+    console.log('🔍 useEffect disparado:', {
+      categoria: formData.categoria,
+      categoriasLength: categorias.length,
+      departamentosLength: departamentos.length
+    });
+
+    if (formData.categoria && categorias.length > 0) {
+      console.log('📊 Categorías disponibles:', categorias.map(cat => ({
+        id: cat.id,
+        nombre: cat.nombre,
+        departamento: cat.departamento
+      })));
+
+      // Buscar la categoría seleccionada
+      const selectedCategory = categorias.find(cat =>
+        String(cat.id) === String(formData.categoria)
+      );
+
+      console.log('🎯 Categoría seleccionada:', selectedCategory);
+
+      if (selectedCategory && selectedCategory.departamento) {
+        // Obtener el ID del departamento
+        const departmentId = String(selectedCategory.departamento.id || selectedCategory.departamento);
+
+        console.log('🏢 Departamento detectado:', {
+          departmentId,
+          currentDepartment: formData.departamento,
+          shouldUpdate: departmentId !== formData.departamento
+        });
+
+        // Solo actualizar si es diferente al actual
+        if (departmentId !== formData.departamento) {
+          console.log('🔄 Actualizando departamento automáticamente:', {
+            categoria: selectedCategory.nombre,
+            departamento: selectedCategory.departamento.nombre || departmentId
+          });
+
+          onFormDataChange({
+            ...formData,
+            departamento: departmentId
+          });
+        } else {
+          console.log('✅ Departamento ya está correcto, no se actualiza');
+        }
+      } else {
+        console.log('⚠️ No se encontró departamento en la categoría seleccionada');
+      }
+    } else {
+      console.log('⏸️ Condiciones no cumplidas para actualizar departamento');
+    }
+  }, [formData.categoria, categorias]);
 
   // Handlers centralizados
   const handleInputChange = (field: keyof DenunciaFormData, value: any) => {
@@ -90,25 +144,7 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
           <H4 color="$textPrimary">🏷️ Categorización</H4>
 
           <YStack gap="$3">
-            <YStack gap="$2">
-              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
-                Departamento Municipal *
-              </Text>
-              <Selector
-                title=""
-                placeholder="Selecciona el departamento responsable"
-                selectedValue={formData.departamento}
-                options={departamentos}
-                onSelect={(value) => handleInputChange('departamento', value)}
-                color="primary"
-              />
-              {formData.departamento && (
-                <Text fontSize="$3" color="$success">
-                  ✅ Departamento seleccionado
-                </Text>
-              )}
-            </YStack>
-
+            {/* Categoría - Ahora primero */}
             <YStack gap="$2">
               <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
                 Categoría del Problema *
@@ -124,6 +160,68 @@ const DenunciaForm: React.FC<DenunciaFormProps> = ({
               {formData.categoria && (
                 <Text fontSize="$3" color="$success">
                   ✅ Categoría seleccionada
+                </Text>
+              )}
+            </YStack>
+
+            {/* Departamento - Ahora de solo lectura */}
+            <YStack gap="$2">
+              <Text fontSize="$4" fontWeight="bold" color="$textPrimary">
+                Departamento Municipal
+              </Text>
+
+              <Card
+                bg="$gray2"
+                borderColor="$gray6"
+                borderWidth={1}
+                borderRadius="$3"
+                h={50}
+                px="$3"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 1,
+                  elevation: 1,
+                }}
+              >
+                <XStack ai="center" jc="space-between" h="100%">
+                  <XStack ai="center" gap="$2" flex={1}>
+                    <Ionicons
+                      name="business"
+                      size={20}
+                      color={formData.departamento ? "#E67E22" : "#999"}
+                    />
+                    <Text
+                      fontSize="$4"
+                      color={formData.departamento ? "$textPrimary" : "$textSecondary"}
+                      flex={1}
+                    >
+                      {(() => {
+                        if (!formData.departamento) return "Se asignará automáticamente según la categoría";
+                        const department = departamentos.find(dept =>
+                          String(dept.id) === String(formData.departamento)
+                        );
+                        return department?.nombre || '';
+                      })()}
+                    </Text>
+                  </XStack>
+
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={20}
+                    color="#999"
+                  />
+                </XStack>
+              </Card>
+
+              <Text fontSize="$3" color="$textSecondary" style={{ fontStyle: 'italic' }}>
+                ℹ️ El departamento se selecciona automáticamente basado en la categoría elegida
+              </Text>
+
+              {formData.departamento && (
+                <Text fontSize="$3" color="$success">
+                  ✅ Departamento asignado automáticamente
                 </Text>
               )}
             </YStack>

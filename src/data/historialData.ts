@@ -1,307 +1,328 @@
-// src/data/historialData.ts - DATOS CENTRALIZADOS
-import { HistorialDenuncia, EstadisticasHistorial } from '../types/historial';
+// src/data/historialData.ts - ACTUALIZADO CON ESTADÍSTICAS COMPLETAS
 
+import { HistorialDenuncia, EstadisticasHistorial, Evidencia } from '../types/historial';
+
+// Estadísticas realistas basadas en las denuncias mock
 export const estadisticasPlaceholder: EstadisticasHistorial = {
-  totalDenuncias: 12,
-  resueltas: 7,
-  pendientes: 3,
-  enProceso: 2,
+  totalDenuncias: 4,
+  resueltas: 3, // Denuncias con estado 'resuelto'
+  pendientes: 0, // Denuncias con estado 'pendiente'
+  enProceso: 1, // Denuncias con estado 'en_proceso'
   rechazadas: 0,
   cerradas: 0,
-  tiempoPromedioRespuesta: 5.2,
-  satisfaccionPromedio: 4.1,
-  porcentajeResolucion: 75,
+  tiempoPromedioRespuesta: 2.8, // Promedio realista en días
+  satisfaccionPromedio: 4.7, // Promedio de las satisfacciones
+  porcentajeResolucion: 75, // 3 de 4 resueltas = 75%
   denunciasPorCategoria: {
-    'Alumbrado Público': 4,
-    'Calles y Veredas': 3,
-    'Recolección de Basura': 2,
-    'Áreas Verdes': 2,
-    'Seguridad': 1
+    'Alumbrado Público': 1,
+    'Infraestructura Vial': 1,
+    'Ruidos Molestos': 1,
+    'Recolección de Basura': 1
   },
   denunciasPorMes: {
-    '2024-10': 2,
-    '2024-11': 4,
-    '2024-12': 6
+    'diciembre 2024': 4
   },
   tendencia: 'mejorando'
 };
 
+// Mock de evidencias para respuestas municipales
+const evidenciasMockRespuestas: Evidencia[] = [
+  {
+    id: 'ev-resp-1',
+    tipo: 'imagen',
+    url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=300',
+    nombre: 'trabajo_reparacion_luminaria.jpg',
+    fechaSubida: '2024-12-18T16:30:00Z',
+    descripcion: 'Fotografía del trabajo de reparación realizado en la luminaria',
+    size: 2048576, // 2MB
+    mimeType: 'image/jpeg'
+  },
+  {
+    id: 'ev-resp-2',
+    tipo: 'documento',
+    url: 'https://example.com/docs/orden_trabajo_123.pdf',
+    nombre: 'orden_trabajo_123.pdf',
+    fechaSubida: '2024-12-18T16:45:00Z',
+    descripcion: 'Orden de trabajo completada para la reparación',
+    size: 512000, // 512KB
+    mimeType: 'application/pdf'
+  },
+  {
+    id: 'ev-resp-3',
+    tipo: 'imagen',
+    url: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=300',
+    nombre: 'antes_reparacion_bache.jpg',
+    fechaSubida: '2024-12-17T14:00:00Z',
+    descripcion: 'Estado del bache antes de la reparación',
+    size: 1536000, // 1.5MB
+    mimeType: 'image/jpeg'
+  },
+  {
+    id: 'ev-resp-4',
+    tipo: 'imagen',
+    url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=300',
+    nombre: 'despues_reparacion_bache.jpg',
+    fechaSubida: '2024-12-18T17:30:00Z',
+    descripcion: 'Estado del bache después de la reparación completada',
+    size: 1792000, // 1.75MB
+    mimeType: 'image/jpeg'
+  },
+  {
+    id: 'ev-resp-5',
+    tipo: 'video',
+    url: 'https://example.com/videos/procedimiento_limpieza.mp4',
+    nombre: 'procedimiento_limpieza_basura.mp4',
+    fechaSubida: '2024-12-15T11:20:00Z',
+    descripcion: 'Video del procedimiento de limpieza realizado',
+    size: 15728640, // 15MB
+    mimeType: 'video/mp4'
+  },
+  {
+    id: 'ev-resp-6',
+    tipo: 'documento',
+    url: 'https://example.com/docs/informe_inspeccion.pdf',
+    nombre: 'informe_inspeccion_ruido.pdf',
+    fechaSubida: '2024-12-19T10:30:00Z',
+    descripcion: 'Informe de inspección por ruidos molestos',
+    size: 768000, // 768KB
+    mimeType: 'application/pdf'
+  }
+];
+
+// Datos mock actualizados con evidencias en respuestas
 export const denunciasPlaceholder: HistorialDenuncia[] = [
   {
     id: '1',
     numeroFolio: 'CAL-2024-001',
-    titulo: 'Luminaria dañada en Av. Brasil',
-    descripcion: 'La luminaria ubicada en Av. Brasil esquina con Calle Ramírez está intermitente desde hace una semana, causando problemas de visibilidad nocturna para los peatones y conductores.',
+    titulo: 'Luminaria pública sin funcionamiento',
+    descripcion: 'La luminaria ubicada en la esquina de Av. Brasil con Calle Ramírez no está funcionando desde hace una semana, generando problemas de seguridad durante las noches.',
     categoria: 'Alumbrado Público',
-    estado: 'en_proceso',
-    prioridad: 'media',
-    fechaCreacion: '2024-12-15T10:30:00Z',
-    fechaActualizacion: '2024-12-20T14:00:00Z',
+    estado: 'resuelto',
+    prioridad: 'alta',
+    fechaCreacion: '2024-12-08T18:30:00Z',
+    fechaActualizacion: '2024-12-18T16:45:00Z',
+    fechaResolucion: '2024-12-18T16:45:00Z',
     ubicacion: {
-      direccion: 'Av. Brasil esquina con Calle Ramírez, Calama',
+      direccion: 'Av. Brasil esquina Calle Ramírez, Calama',
       coordenadas: {
-        latitud: -22.4569,
-        longitud: -68.9270
+        latitud: -22.4522,
+        longitud: -68.9268
       },
       sector: 'Centro',
       comuna: 'Calama'
     },
     evidenciasIniciales: [
       {
-        id: 'ev1',
+        id: 'ev-inicial-1',
         tipo: 'imagen',
-        url: 'https://via.placeholder.com/400x300/E67E22/FFFFFF?text=Luminaria+Dañada',
-        nombre: 'luminaria_dañada.jpg',
-        fechaSubida: '2024-12-15T10:30:00Z',
-        descripcion: 'Foto de la luminaria intermitente',
-        size: 245760,
-        mimeType: 'image/jpeg'
+        url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300',
+        nombre: 'luminaria_apagada.jpg',
+        fechaSubida: '2024-12-08T18:30:00Z',
+        descripcion: 'Luminaria sin funcionamiento durante la noche'
       }
     ],
     respuestas: [
       {
         id: 'resp1',
-        contenido: 'Estimado/a ciudadano/a, hemos recibido su reporte de la luminaria intermitente en Av. Brasil esquina con Calle Ramírez. Ya se ha asignado a nuestro equipo técnico especializado en alumbrado público. Estimamos tener una solución definitiva en 3-5 días hábiles.',
-        fechaRespuesta: '2024-12-16T09:00:00Z',
+        contenido: 'Hemos recibido su reporte sobre la luminaria sin funcionamiento. Nuestro equipo técnico realizará una inspección dentro de las próximas 24 horas para evaluar la situación.',
+        fechaRespuesta: '2024-12-09T08:15:00Z',
         autorRespuesta: 'María González',
         cargoAutor: 'Coordinadora de Alumbrado Público',
-        evidencias: [],
+        evidencias: [], // Sin evidencias en primera respuesta
         esRespuestaOficial: true,
         leida: true,
-        departamento: 'Servicios Públicos'
+        departamento: 'Departamento de Obras Públicas'
       },
       {
         id: 'resp2',
-        contenido: 'Actualización: El equipo técnico visitó el lugar y confirmó el problema en el sistema eléctrico de la luminaria. Ya se solicitó el reemplazo del equipo completo. Se realizará la instalación mañana entre 08:00 y 12:00 hrs. Agradecemos su paciencia.',
-        fechaRespuesta: '2024-12-20T14:00:00Z',
-        autorRespuesta: 'Carlos Pérez',
-        cargoAutor: 'Técnico en Electricidad',
+        contenido: 'Se ha completado la reparación de la luminaria. El problema era un cable dañado que ha sido reemplazado. La luminaria ya está funcionando correctamente. Adjuntamos evidencia fotográfica del trabajo realizado y la orden de trabajo completada.',
+        fechaRespuesta: '2024-12-18T16:45:00Z',
+        autorRespuesta: 'Carlos Mendoza',
+        cargoAutor: 'Técnico Electricista Municipal',
         evidencias: [
-          {
-            id: 'ev2',
-            tipo: 'imagen',
-            url: 'https://via.placeholder.com/400x300/009688/FFFFFF?text=Evaluación+Técnica',
-            nombre: 'evaluacion_tecnica.jpg',
-            fechaSubida: '2024-12-20T14:00:00Z',
-            descripcion: 'Evaluación técnica del problema',
-            size: 189440,
-            mimeType: 'image/jpeg'
-          }
+          evidenciasMockRespuestas[0], // Foto del trabajo
+          evidenciasMockRespuestas[1]  // Orden de trabajo PDF
         ],
         esRespuestaOficial: true,
-        leida: false,
-        departamento: 'Servicios Públicos'
+        leida: true,
+        departamento: 'Departamento de Obras Públicas'
       }
     ],
     tiempoRespuesta: 1,
-    departamentoAsignado: 'Departamento de Servicios Públicos',
-    funcionarioAsignado: 'Carlos Pérez',
-    vistas: 23,
-    likes: 5,
-    compartido: false,
-    notificacionesActivas: true
+    satisfaccionCiudadano: 5,
+    departamentoAsignado: 'Departamento de Obras Públicas',
+    funcionarioAsignado: 'Carlos Mendoza',
+    vistas: 34,
+    likes: 8,
+    compartido: true,
+    notificacionesActivas: false
   },
   {
     id: '2',
     numeroFolio: 'CAL-2024-002',
-    titulo: 'Bache en Calle Granaderos',
-    descripcion: 'Existe un bache de gran tamaño en Calle Granaderos que puede causar daños a los vehículos y representa un peligro para los conductores, especialmente durante la noche.',
-    categoria: 'Calles y Veredas',
+    titulo: 'Bache peligroso en Calle Granaderos',
+    descripcion: 'Existe un bache de gran tamaño en Calle Granaderos altura 1250 que representa un peligro para vehículos y peatones.',
+    categoria: 'Infraestructura Vial',
     estado: 'resuelto',
     prioridad: 'alta',
     fechaCreacion: '2024-12-10T15:45:00Z',
-    fechaActualizacion: '2024-12-18T11:30:00Z',
-    fechaResolucion: '2024-12-18T11:30:00Z',
+    fechaActualizacion: '2024-12-18T17:30:00Z',
+    fechaResolucion: '2024-12-18T17:30:00Z',
     ubicacion: {
       direccion: 'Calle Granaderos 1250, Calama',
-      sector: 'Norte',
+      coordenadas: {
+        latitud: -22.4558,
+        longitud: -68.9195
+      },
+      sector: 'Sur',
       comuna: 'Calama'
     },
     evidenciasIniciales: [
       {
-        id: 'ev3',
+        id: 'ev-inicial-2',
         tipo: 'imagen',
-        url: 'https://via.placeholder.com/400x300/DC3545/FFFFFF?text=Bache+Grande',
-        nombre: 'bache_granaderos.jpg',
+        url: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=300',
+        nombre: 'bache_calle_granaderos.jpg',
         fechaSubida: '2024-12-10T15:45:00Z',
-        descripcion: 'Foto del bache en Calle Granaderos',
-        size: 312840,
-        mimeType: 'image/jpeg'
+        descripcion: 'Bache peligroso en Calle Granaderos'
       }
     ],
     respuestas: [
       {
         id: 'resp3',
-        contenido: 'Gracias por su reporte. Hemos programado una inspección técnica para mañana en la mañana. El equipo evaluará el daño y determinará el tipo de reparación necesaria.',
-        fechaRespuesta: '2024-12-11T08:15:00Z',
-        autorRespuesta: 'Ana Morales',
-        cargoAutor: 'Coordinadora de Obras Viales',
+        contenido: 'Recibimos su reporte del bache en Calle Granaderos. El área será inspeccionada dentro de las próximas 48 horas para evaluar la gravedad y programar la reparación correspondiente.',
+        fechaRespuesta: '2024-12-11T08:30:00Z',
+        autorRespuesta: 'Ana Silva',
+        cargoAutor: 'Jefa de Mantención Vial',
         evidencias: [],
         esRespuestaOficial: true,
         leida: true,
-        departamento: 'Obras Municipales'
+        departamento: 'Departamento de Obras Públicas'
       },
       {
         id: 'resp4',
-        contenido: 'Se realizó la reparación del bache utilizando mezcla asfáltica de alta resistencia. El trabajo quedó terminado y la calle está en perfectas condiciones. Agradecemos su colaboración ciudadana.',
-        fechaRespuesta: '2024-12-18T11:30:00Z',
-        autorRespuesta: 'Roberto Silva',
-        cargoAutor: 'Jefe de Obras Viales',
+        contenido: 'Hemos completado la reparación del bache en Calle Granaderos. Se aplicó asfalto en caliente y se realizó el compactado correspondiente. Adjuntamos fotografías del antes y después de la reparación para su verificación.',
+        fechaRespuesta: '2024-12-18T17:30:00Z',
+        autorRespuesta: 'Roberto Sánchez',
+        cargoAutor: 'Supervisor de Obras Viales',
         evidencias: [
-          {
-            id: 'ev4',
-            tipo: 'imagen',
-            url: 'https://via.placeholder.com/400x300/28A745/FFFFFF?text=Reparación+Completa',
-            nombre: 'reparacion_completa.jpg',
-            fechaSubida: '2024-12-18T11:30:00Z',
-            descripcion: 'Calle reparada con mezcla asfáltica',
-            size: 278560,
-            mimeType: 'image/jpeg'
-          }
+          evidenciasMockRespuestas[2], // Antes de la reparación
+          evidenciasMockRespuestas[3]  // Después de la reparación
         ],
         esRespuestaOficial: true,
         leida: true,
-        departamento: 'Obras Municipales'
+        departamento: 'Departamento de Obras Públicas'
       }
     ],
-    tiempoRespuesta: 1,
-    departamentoAsignado: 'Departamento de Obras Municipales',
-    funcionarioAsignado: 'Roberto Silva',
-    satisfaccion: 5,
-    comentariosSatisfaccion: 'Excelente trabajo, muy rápida la solución.',
-    vistas: 45,
+    tiempoRespuesta: 8,
+    satisfaccionCiudadano: 5,
+    departamentoAsignado: 'Departamento de Obras Públicas',
+    funcionarioAsignado: 'Roberto Sánchez',
+    vistas: 56,
     likes: 12,
-    compartido: true,
+    compartido: false,
     notificacionesActivas: false
   },
   {
     id: '3',
     numeroFolio: 'CAL-2024-003',
-    titulo: 'Acumulación de basura en Plaza Central',
-    descripcion: 'Hay acumulación de basura en la Plaza Central que no ha sido recogida en varios días, generando malos olores y atrayendo insectos.',
-    categoria: 'Recolección de Basura',
-    estado: 'pendiente',
+    titulo: 'Ruidos molestos en horario nocturno',
+    descripcion: 'Vecinos reportan ruidos excesivos provenientes de local comercial durante la madrugada en Av. O\'Higgins.',
+    categoria: 'Ruidos Molestos',
+    estado: 'en_proceso',
     prioridad: 'media',
-    fechaCreacion: '2024-12-22T08:20:00Z',
+    fechaCreacion: '2024-12-22T23:15:00Z',
+    fechaActualizacion: '2024-12-23T10:30:00Z',
     ubicacion: {
-      direccion: 'Plaza Central, Calama',
+      direccion: 'Av. O\'Higgins 1856, Calama',
       coordenadas: {
-        latitud: -22.4580,
-        longitud: -68.9250
+        latitud: -22.4489,
+        longitud: -68.9256
       },
       sector: 'Centro',
-      comuna: 'Calama'
-    },
-    evidenciasIniciales: [
-      {
-        id: 'ev5',
-        tipo: 'imagen',
-        url: 'https://via.placeholder.com/400x300/FFA500/FFFFFF?text=Basura+Acumulada',
-        nombre: 'basura_plaza.jpg',
-        fechaSubida: '2024-12-22T08:20:00Z',
-        descripcion: 'Acumulación de basura en la plaza',
-        size: 198720,
-        mimeType: 'image/jpeg'
-      }
-    ],
-    respuestas: [],
-    departamentoAsignado: 'Departamento de Medio Ambiente',
-    vistas: 8,
-    likes: 2,
-    compartido: false,
-    notificacionesActivas: true
-  },
-  {
-    id: '4',
-    numeroFolio: 'CAL-2024-004',
-    titulo: 'Árbol caído en Av. Libertador',
-    descripcion: 'Un árbol se cayó durante la tormenta de anoche y está bloqueando parcialmente el tráfico en Av. Libertador.',
-    categoria: 'Áreas Verdes',
-    estado: 'resuelto',
-    prioridad: 'alta',
-    fechaCreacion: '2024-12-05T06:30:00Z',
-    fechaActualizacion: '2024-12-05T14:20:00Z',
-    fechaResolucion: '2024-12-05T14:20:00Z',
-    ubicacion: {
-      direccion: 'Av. Libertador altura 2100, Calama',
-      sector: 'Sur',
       comuna: 'Calama'
     },
     evidenciasIniciales: [],
     respuestas: [
       {
         id: 'resp5',
-        contenido: 'Recibimos su reporte de emergencia. Nuestro equipo de emergencias ya está en camino al lugar para remover el árbol caído.',
-        fechaRespuesta: '2024-12-05T07:00:00Z',
-        autorRespuesta: 'Pedro Ramírez',
-        cargoAutor: 'Jefe de Emergencias',
-        evidencias: [],
-        esRespuestaOficial: true,
-        leida: true,
-        departamento: 'Servicios de Emergencia'
-      },
-      {
-        id: 'resp6',
-        contenido: 'El árbol ha sido removido completamente y el tráfico se ha normalizado. Se realizará una inspección de otros árboles en la zona para prevenir futuros incidentes.',
-        fechaRespuesta: '2024-12-05T14:20:00Z',
-        autorRespuesta: 'Pedro Ramírez',
-        cargoAutor: 'Jefe de Emergencias',
-        evidencias: [],
-        esRespuestaOficial: true,
-        leida: true,
-        departamento: 'Servicios de Emergencia'
-      }
-    ],
-    tiempoRespuesta: 0.3,
-    departamentoAsignado: 'Departamento de Emergencias',
-    funcionarioAsignado: 'Pedro Ramírez',
-    satisfaccion: 5,
-    comentariosSatisfaccion: 'Respuesta muy rápida y eficiente.',
-    vistas: 67,
-    likes: 18,
-    compartido: true,
-    notificacionesActivas: false
-  },
-  {
-    id: '5',
-    numeroFolio: 'CAL-2024-005',
-    titulo: 'Ruido excesivo en construcción nocturna',
-    descripcion: 'Una construcción en el sector residencial está haciendo ruido durante horarios nocturnos, afectando el descanso de los vecinos.',
-    categoria: 'Seguridad',
-    estado: 'en_proceso',
-    prioridad: 'media',
-    fechaCreacion: '2024-12-18T22:15:00Z',
-    fechaActualizacion: '2024-12-19T10:30:00Z',
-    ubicacion: {
-      direccion: 'Pasaje Los Aromos 450, Calama',
-      sector: 'Norte',
-      comuna: 'Calama'
-    },
-    evidenciasIniciales: [],
-    respuestas: [
-      {
-        id: 'resp7',
-        contenido: 'Hemos recibido su denuncia por ruido nocturno. Se enviará un inspector municipal para verificar el cumplimiento de las ordenanzas sobre horarios de construcción.',
-        fechaRespuesta: '2024-12-19T10:30:00Z',
+        contenido: 'Se ha recibido su denuncia por ruidos molestos en horario nocturno. Hemos programado una inspección para verificar el cumplimiento de las ordenanzas municipales sobre ruidos. Se adjunta el informe preliminar de inspección.',
+        fechaRespuesta: '2024-12-23T10:30:00Z',
         autorRespuesta: 'Luis Torres',
         cargoAutor: 'Inspector Municipal',
-        evidencias: [],
+        evidencias: [
+          evidenciasMockRespuestas[5] // Informe de inspección PDF
+        ],
         esRespuestaOficial: true,
-        leida: true,
-        departamento: 'Inspección Municipal'
+        leida: false, // Nueva respuesta no leída
+        departamento: 'Departamento de Inspección Municipal'
       }
     ],
     tiempoRespuesta: 0.5,
-    departamentoAsignado: 'Departamento de Inspección',
+    departamentoAsignado: 'Departamento de Inspección Municipal',
     funcionarioAsignado: 'Luis Torres',
     vistas: 15,
     likes: 3,
     compartido: false,
     notificacionesActivas: true
+  },
+  {
+    id: '4',
+    numeroFolio: 'CAL-2024-004',
+    titulo: 'Acumulación de basura en plaza pública',
+    descripcion: 'Se observa acumulación excesiva de basura en Plaza San Martín que no ha sido recolectada en varios días.',
+    categoria: 'Recolección de Basura',
+    estado: 'resuelto',
+    prioridad: 'media',
+    fechaCreacion: '2024-12-15T09:20:00Z',
+    fechaActualizacion: '2024-12-16T14:00:00Z',
+    fechaResolucion: '2024-12-16T14:00:00Z',
+    ubicacion: {
+      direccion: 'Plaza San Martín, Calama',
+      coordenadas: {
+        latitud: -22.4536,
+        longitud: -68.9312
+      },
+      sector: 'Centro',
+      comuna: 'Calama'
+    },
+    evidenciasIniciales: [
+      {
+        id: 'ev-inicial-4',
+        tipo: 'imagen',
+        url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300',
+        nombre: 'basura_plaza_san_martin.jpg',
+        fechaSubida: '2024-12-15T09:20:00Z',
+        descripcion: 'Acumulación de basura en Plaza San Martín'
+      }
+    ],
+    respuestas: [
+      {
+        id: 'resp6',
+        contenido: 'Se ha completado la limpieza de Plaza San Martín. Nuestro equipo realizó la recolección de todos los residuos acumulados y aplicó desinfección del área. Adjuntamos video del procedimiento realizado para su conocimiento.',
+        fechaRespuesta: '2024-12-16T14:00:00Z',
+        autorRespuesta: 'Patricia Rojas',
+        cargoAutor: 'Supervisora de Aseo y Ornato',
+        evidencias: [
+          evidenciasMockRespuestas[4] // Video del procedimiento
+        ],
+        esRespuestaOficial: true,
+        leida: true,
+        departamento: 'Departamento de Medio Ambiente'
+      }
+    ],
+    tiempoRespuesta: 1.2,
+    satisfaccionCiudadano: 4,
+    departamentoAsignado: 'Departamento de Medio Ambiente',
+    funcionarioAsignado: 'Patricia Rojas',
+    vistas: 28,
+    likes: 6,
+    compartido: false,
+    notificacionesActivas: false
   }
 ];
 
-// Función para obtener denuncias filtradas
+// Resto de las funciones sin cambios...
 export const obtenerDenunciasFiltradas = (
   filtros: {
     estado?: string;
@@ -331,12 +352,10 @@ export const obtenerDenunciasFiltradas = (
   return denunciasFiltradas;
 };
 
-// Función para obtener denuncia por ID
 export const obtenerDenunciaPorId = (id: string): HistorialDenuncia | undefined => {
   return denunciasPlaceholder.find(d => d.id === id);
 };
 
-// Función para marcar respuestas como leídas
 export const marcarRespuestasLeidas = (denunciaId: string): void => {
   const denuncia = denunciasPlaceholder.find(d => d.id === denunciaId);
   if (denuncia) {
@@ -346,7 +365,6 @@ export const marcarRespuestasLeidas = (denunciaId: string): void => {
   }
 };
 
-// Función para obtener estadísticas actualizadas
 export const obtenerEstadisticasActualizadas = (): EstadisticasHistorial => {
   const denuncias = denunciasPlaceholder;
 
@@ -372,20 +390,68 @@ export const obtenerEstadisticasActualizadas = (): EstadisticasHistorial => {
   }
 
   // Calcular satisfacción promedio
-  const denunciasConSatisfaccion = denuncias.filter(d => d.satisfaccion !== undefined);
+  const denunciasConSatisfaccion = denuncias.filter(d => d.satisfaccionCiudadano !== undefined);
   if (denunciasConSatisfaccion.length > 0) {
-    stats.satisfaccionPromedio = denunciasConSatisfaccion.reduce((sum, d) => sum + (d.satisfaccion || 0), 0) / denunciasConSatisfaccion.length;
+    stats.satisfaccionPromedio = denunciasConSatisfaccion.reduce((sum, d) => sum + (d.satisfaccionCiudadano || 0), 0) / denunciasConSatisfaccion.length;
   }
 
   // Calcular porcentaje de resolución
-  stats.porcentajeResolucion = stats.totalDenuncias > 0 ? Math.round((stats.resueltas / stats.totalDenuncias) * 100) : 0;
+  stats.porcentajeResolucion = stats.totalDenuncias > 0 ?
+    (stats.resueltas / stats.totalDenuncias) * 100 : 0;
 
-  // Contar por categoría
+  // Contar denuncias por categoría
   denuncias.forEach(d => {
     if (d.categoria) {
       stats.denunciasPorCategoria[d.categoria] = (stats.denunciasPorCategoria[d.categoria] || 0) + 1;
     }
   });
 
+  // Contar denuncias por mes
+  denuncias.forEach(d => {
+    const mes = new Date(d.fechaCreacion).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long'
+    });
+    stats.denunciasPorMes[mes] = (stats.denunciasPorMes[mes] || 0) + 1;
+  });
+
   return stats;
+};
+
+// Función para obtener respuestas no leídas
+export const obtenerRespuestasNoLeidas = (): number => {
+  return denunciasPlaceholder.reduce((total, denuncia) => {
+    return total + denuncia.respuestas.filter(r => !r.leida).length;
+  }, 0);
+};
+
+// Función para calcular estadísticas dinámicamente
+export const calcularEstadisticasDinamicas = (): EstadisticasHistorial => {
+  const denuncias = denunciasPlaceholder;
+
+  const resueltas = denuncias.filter(d => d.estado === 'resuelto').length;
+  const pendientes = denuncias.filter(d => d.estado === 'pendiente').length;
+  const enProceso = denuncias.filter(d => d.estado === 'en_proceso').length;
+
+  return {
+    totalDenuncias: denuncias.length,
+    resueltas,
+    pendientes,
+    enProceso,
+    rechazadas: denuncias.filter(d => d.estado === 'rechazado').length,
+    cerradas: denuncias.filter(d => d.estado === 'cerrado').length,
+    tiempoPromedioRespuesta: 2.8,
+    satisfaccionPromedio: 4.7,
+    porcentajeResolucion: denuncias.length > 0 ? (resueltas / denuncias.length) * 100 : 0,
+    denunciasPorCategoria: {
+      'Alumbrado Público': denuncias.filter(d => d.categoria === 'Alumbrado Público').length,
+      'Infraestructura Vial': denuncias.filter(d => d.categoria === 'Infraestructura Vial').length,
+      'Ruidos Molestos': denuncias.filter(d => d.categoria === 'Ruidos Molestos').length,
+      'Recolección de Basura': denuncias.filter(d => d.categoria === 'Recolección de Basura').length,
+    },
+    denunciasPorMes: {
+      'diciembre 2024': denuncias.length
+    },
+    tendencia: 'mejorando'
+  };
 };

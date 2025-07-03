@@ -25,19 +25,44 @@ class DenunciasService {
 
   // Cache de datos críticos con fallbacks
   private fallbackData = {
-    categorias: [
-      { id: 1, nombre: 'Alumbrado Público', descripcion: '', activo: true },
-      { id: 2, nombre: 'Calles y Veredas', descripcion: '', activo: true },
-      { id: 3, nombre: 'Recolección de Basura', descripcion: '', activo: true },
-      { id: 4, nombre: 'Áreas Verdes', descripcion: '', activo: true },
-      { id: 5, nombre: 'Seguridad', descripcion: '', activo: true },
-    ],
-    departamentos: [
-      { id: 1, nombre: 'Servicios Públicos', descripcion: '', activo: true },
-      { id: 2, nombre: 'Obras Municipales', descripcion: '', activo: true },
-      { id: 3, nombre: 'Medio Ambiente', descripcion: '', activo: true },
-      { id: 4, nombre: 'Seguridad Ciudadana', descripcion: '', activo: true },
-    ],
+   categorias: [
+         {
+           id: 1,
+           nombre: 'Alumbrado Público',
+           descripcion: 'Problemas con iluminación pública',
+           departamento: { id: 1, nombre: 'Obras Públicas', descripcion: 'Infraestructura y vialidad municipal' }
+         },
+         {
+           id: 2,
+           nombre: 'Calles y Veredas',
+           descripcion: 'Problemas viales y de infraestructura',
+           departamento: { id: 1, nombre: 'Obras Públicas', descripcion: 'Infraestructura y vialidad municipal' }
+         },
+         {
+           id: 3,
+           nombre: 'Recolección de Basura',
+           descripcion: 'Problemas con recolección de residuos',
+           departamento: { id: 2, nombre: 'Medio Ambiente', descripcion: 'Limpieza y ornato municipal' }
+         },
+         {
+           id: 4,
+           nombre: 'Áreas Verdes',
+           descripcion: 'Mantenimiento de parques y jardines',
+           departamento: { id: 2, nombre: 'Medio Ambiente', descripcion: 'Limpieza y ornato municipal' }
+         },
+         {
+           id: 5,
+           nombre: 'Seguridad',
+           descripcion: 'Temas de seguridad ciudadana',
+           departamento: { id: 3, nombre: 'Servicios Municipales', descripcion: 'Servicios básicos municipales' }
+         },
+       ],
+       departamentos: [
+         { id: 1, nombre: 'Obras Públicas', descripcion: 'Infraestructura y vialidad municipal' },
+         { id: 2, nombre: 'Medio Ambiente', descripcion: 'Limpieza y ornato municipal' },
+         { id: 3, nombre: 'Servicios Municipales', descripcion: 'Servicios básicos municipales' },
+         { id: 4, nombre: 'Seguridad Ciudadana', descripcion: 'Seguridad y vigilancia' },
+       ],
     juntasVecinales: [
       { id: 1, nombre: 'Centro', sector: 'Centro' },
       { id: 2, nombre: 'Norte', sector: 'Norte' },
